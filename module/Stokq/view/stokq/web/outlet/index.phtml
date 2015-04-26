@@ -1,0 +1,71 @@
+<?php
+
+use Stokq\Entity\Account;
+
+/** @var Account $account */
+$account = $this->account;
+
+?>
+
+<div class="container-fluid pt15 pb15">
+
+    <div class="row">
+        <div class="col-md-4" id="sidebar-pane">
+            <?= $this->partial('stokq/web/outlet/_index_sidebar') ?>
+        </div>
+
+        <div class="col-md-8" id="main-pane">
+
+            <div class="inline-block middle ml-15 mb20">
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15 toggle-sidebar" href="#">&larr; Toggle Sidebar</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/outlet">Analisis Outlet</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/sale/overview">Statistik Penjualan</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/sale">Tabel Penjualan</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered outlet">
+                    <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 65px !important;"></th>
+                        <th rowspan="2">Outlet</th>
+                        <th rowspan="2">Gudang</th>
+                        <th colspan="2">Qty Terjual</th>
+                        <th colspan="2">Penjualan</th>
+                    </tr>
+                    <tr>
+                        <th>7 Hari</th>
+                        <th>30 Hari</th>
+                        <th>7 Hari</th>
+                        <th>30 Hari</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <tr class="blank-state">
+                        <td colspan="7">
+                            <br/>
+                            <p class="text-center grey">
+                                <i class="fa fa-spinner"></i> Loading data, tunggu sebentar...
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<?php include '_edit_outlet_row.tpl' ?>
+<?php include '_outlet_row.tpl' ?>
+<?php include '_no_outlet.tpl' ?>
+
+<script type="text/javascript" src='<?='/vendor/accounting.js/accounting.min.js'?>'></script>
+<script>
+    var app = app || { Outlet: {}},
+        currency = '<?= $account->getDefaultCurrency() ?> ';
+
+    app.warehouses = app.warehouses || <?= json_encode($this->warehouses) ?>;
+    <?php include '_index.js' ?>
+</script>

@@ -1,0 +1,208 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Outlet;
+
+/** @var Account $account */
+/** @var Outlet $outlet */
+
+$account = $this->account;
+$outlet = $this->outlet;
+
+?>
+
+<div class="container-fluid pt5 pb20 pl20 pr20 bg-grey">
+    <h2 class="dark-grey mb0 pb0">
+        <?= $outlet->getName() ;?>
+    </h2>
+
+</div>
+
+<div role="tabpanel">
+
+    <ul class="nav nav-tabs alt bg-grey" role="tablist">
+        <li role="presentation" class="active ml20">
+            <a href="#tab-menu" aria-controls="tab-menu" role="tab" data-toggle="tab">Menu</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="tab-menu">
+            <div class="container-fluid pt20 pb20">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped menu-price" id="price-table">
+                                <thead>
+                                <tr>
+                                    <th style="width: 50px;" rowspan="2"></th>
+                                    <th style="min-width: 200px;" rowspan="2">Menu</th>
+                                    <th colspan="2">Penjualan 1 Bln Terakhir</th>
+                                    <th style="width: 300px;" rowspan="2">Harga</th>
+                                </tr>
+                                <tr>
+                                    <th style="width: 130px;">Qty</th>
+                                    <th style="width: 170px;">Total</th>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="bg-grey pl15">
+                                        <i class="fa fa-warning mr5"></i>
+                                        Untuk mengedit harga menu, ganti angka di dalam kotak lalu tekan enter untuk menyimpannya.
+                                    </td>
+                                </tr>
+                                </thead>
+                                <tbody id="price-list">
+                                <?php foreach ($this->prices as $price) { ?>
+                                    <tr>
+                                        <td class="middle center">
+                                            <?php if (isset($price['price_id'])) { ?>
+                                                <a href="/menu-price/delete?id=<?= $price['price_id'] ?>" class="btn btn-delete btn-xs" data-delete>
+                                                    <i class="fa fa-times"></i>
+                                                </a>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?= $price['menu_name'] ?>
+                                        </td>
+                                        <td>
+                                            <small class="grey left"><?= ($price['serving_unit'] ?: 'item') ?>: </small>
+                                            <strong class="grey"><?= ($price['sale_quantity'] ?: '-') ?></strong>
+                                        </td>
+                                        <td>
+                                            <span class="grey left"><?= $account->getDefaultCurrency() ?></span>
+                                            <strong class="grey"><?= number_format($price['sale_subtotal'], 2) ?></strong>
+                                        </td>
+                                        <td>
+                                            <fieldset>
+                                                <?php if (isset($price['price_id']) && isset($price['price'])) { ?>
+                                                    <div class="input-group">
+                                                        <input name="id" type="hidden" value="<?= $price['price_id'] ?>"/>
+                                                        <span class="input-group-addon"><?= $account->getDefaultCurrency() ?></span>
+                                                        <input class="form-control" type="number" name="price" min="0" step="0.01"
+                                                               value="<?= $price['price'] ?>" placeholder="Price"
+                                                               data-value="<?= $price['price'] ?>" data-price/>
+                                                        <span class="input-group-addon"> / <?= $price['serving_unit'] ?></span>
+                                                    </div>
+                                                <?php } else { ?>
+                                                    <p class="block text-center m0 p0 pt5">
+                                                        <a data-create-menu-price class="grey" href="/menu-price/create?menuId=<?= $price['menu_id'] ?>&outletId=<?= $outlet->getId() ?>">
+                                                            <i class="fa fa-plus fa-2x"></i>
+                                                        </a>
+                                                    </p>
+                                                <?php } ?>
+                                            </fieldset>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<?php include '_menu-price-row.tpl' ?>
+
+<script>
+
+    function deletableItem(elem) {
+        $(elem).on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var target = $(this);
+            if (confirm('Yakin ingin menghapus item yang dipilih?')) {
+                $.ajax({
+                    url: target.attr('href'),
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function() {
+                        target.closest('tr').fadeOut('fast');
+                    },
+                    error: function() {
+                        alert('Tidak dapat menghapus item untuk saat ini, cobalah beberapa saat lagi.')
+                    }
+                });
+            }
+        });
+    }
+
+    function markAsChanged(elem) {
+        $(elem).on('keyup', function() {
+            if ($(this).data('value') != $(this).val()) {
+                $(this).addClass('changed')
+            } else {
+                $(this).removeClass('changed')
+            }
+        });
+    }
+
+    function saveOnEnter(elems, url) {
+        elems.each(function() {
+            var el = $(this);
+
+            el.keypress(function(e) {
+                if (e.keyCode == 13 && (el.val() != el.data('value'))) {
+                    $.ajax({
+                        url: url,
+                        data: el.closest('fieldset').serialize(),
+                        dataType: 'json',
+                        method: 'post',
+                        success: function(resp) {
+                            el.attr('value', el.val());
+                            el.attr('data-value', el.val());
+                            el.removeClass('changed');
+                        },
+                        error: function() {
+                            alert('Tidak dapat meng-update item yang dipilih, cobalah beberapa saat lagi.')
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    var priceList = $('#price-list'),
+        menuPriceInput = $('[data-price]', priceList),
+        menuPriceRowTemplate = $('#menu-price-row-template');
+
+    $('[data-create-menu-price]').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var a = $(this);
+
+        $.ajax({
+            url: a.attr('href'),
+            dataType: 'json',
+            method: 'post',
+            success: function(data) {
+                data['currency'] = '<?= $account->getDefaultCurrency() ?>';
+                var tpl = _.template(menuPriceRowTemplate.html()),
+                    tr = a.closest('tr');
+                tr.addClass('new');
+                tr.html(tpl(data));
+
+                markAsChanged($('[data-price]', tr));
+                saveOnEnter($('[data-price]', tr), '/menu-price/update-price');
+                deletableItem($('.btn-delete'));
+            },
+            error: function() {
+                alert('Tidak dapat menambah menu yang dipilih, cobalah beberapa saat lagi.')
+            }
+        });
+    });
+
+    markAsChanged(menuPriceInput);
+    saveOnEnter(menuPriceInput, '/menu-price/update-price');
+
+    deletableItem($('.btn-delete'));
+
+</script>

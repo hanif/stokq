@@ -1,0 +1,59 @@
+<div class="container-fluid pt15 pb15">
+
+    <div class="row">
+        <div class="col-md-4" id="sidebar-pane">
+            <?= $this->partial('stokq/web/menu/_index_sidebar') ?>
+        </div>
+
+        <div class="col-md-8" id="main-pane">
+
+            <div class="inline-block middle ml-15 mb20">
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15 toggle-sidebar" href="#">&larr; Toggle Sidebar</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/menu">Analisis Menu</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/outlet">Analisis Outlet</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/sale/overview">Overview Penjualan</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered menu">
+                    <thead>
+                    <tr>
+                        <th style="width: 65px !important;"></th>
+                        <th>Menu</th>
+                        <th>Varian</th>
+                        <th>Unit Saji</th>
+                        <th>Harga Default</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <tr class="blank-state">
+                        <td colspan="5">
+                            <br/>
+                            <p class="text-center grey">
+                                <i class="fa fa-spinner"></i> Loading data, tunggu sebentar...
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<?php include '_menu_row.tpl' ?>
+<?php include '_edit_menu_row.tpl' ?>
+<?php include '_no_menu.tpl' ?>
+
+<?php include '_type_row.tpl' ?>
+<?php include '_edit_type_row.tpl' ?>
+<?php include '_no_type.tpl' ?>
+
+<script>
+    var types = <?= json_encode($this->types) ?>,
+        menuParents = <?= json_encode($this->parents) ?>;
+
+    <?php include '_index_type.js' ?>
+    <?php include '_index_menu.js' ?>
+</script>

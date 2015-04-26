@@ -1,0 +1,41 @@
+<?php
+/** @var StdClass $pages */
+/** @var callable $url */
+?>
+<?php if ($pages->pageCount > 1): ?>
+    <div class="pagination-wrapper clearfix">
+        <ul class="pagination">
+
+            <?php if ($pages->first): ?>
+                <li class="arrow"><a href="<?= $url($pages->first) ?>">Awal</a></li>
+            <?php else: ?>
+                <li class="arrow disabled"><a href="#">Awal</a></li>
+            <?php endif; ?>
+
+            <?php if (isset($pages->previous) && $pages->previous): ?>
+                <li class="arrow"><a href="<?= $url($pages->previous) ?>">&lt;</a></li>
+            <?php else: ?>
+                <li class="arrow disabled"><a href="#">&lt;</a></li>
+            <?php endif; ?>
+
+            <?php foreach ($pages->pagesInRange as $p): ?>
+                <?php $liClass = ($p == $pages->current) ? "active" : ""; ?>
+                <li class="<?= $liClass ?>"><a href="<?= $url($p) ?>"><?= $p ?></a></li>
+            <?php endforeach; ?>
+
+            <?php if (isset($pages->next) && $pages->next): ?>
+                <li class="arrow"><a href="<?= $url($pages->next) ?>">&gt;</a></li>
+            <?php else: ?>
+                <li class="arrow disabled"><a href="#">&gt;</a></li>
+            <?php endif; ?>
+
+            <?php if ($pages->last): ?>
+                <li class="arrow"><a href="<?= $url($pages->last) ?>">Akhir</a></li>
+            <?php else: ?>
+                <li class="arrow disabled"><a href="#">Akhir</a></li>
+            <?php endif; ?>
+
+        </ul>
+    </div>
+
+<?php endif; ?>

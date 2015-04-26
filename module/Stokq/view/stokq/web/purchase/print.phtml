@@ -1,0 +1,290 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Purchase;
+use Stokq\Entity\Supplier;
+use Stokq\Entity\User;
+use Stokq\Entity\WarehousePurchase;
+
+/** @var Purchase $purchase */
+$purchase = $this->purchase;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var number $total */
+$total = 0;
+
+/** @var number $subtotal */
+$subtotal = 0;
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><?= $purchase->getTitle() ?></title>
+    <?php if (!$this->config()->isDebug()) { ?>
+        <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css">
+    <?php } else { ?>
+        <link rel="stylesheet" type="text/css" href="/vendor/bootstrap/css/bootstrap.min.css">
+    <?php } ?>
+
+    <style type="text/css">
+        body {
+            padding-bottom: 50px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .left {
+            float: left;
+        }
+
+        .grey {
+            color: #999;
+        }
+
+        .customer p, .supplier p {
+            margin-bottom: 5px;
+        }
+
+    </style>
+
+    <style type="text/css" media="print">
+        body {
+            font-size: 11px;
+        }
+    </style>
+
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1><?= $purchase->getTitle() ?></h1>
+
+            <?php if ($purchase->getPoNumber()) { ?>
+                <h4>Nomor PO: <?= $purchase->getPoNumber() ?></h4>
+            <?php } ?>
+
+            <h4>
+                Status: <?= Purchase::statusToLocaleID($purchase->getStatus()) ?>
+            </h4>
+
+
+            <hr/>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-5 customer">
+            <h4><?= $account->getName() ?></h4>
+
+            <?php if ($account->getAddress()) { ?>
+                <p><?= $account->getAddress() ?></p>
+            <?php } ?>
+
+            <?php if ($account->getPhone()) { ?>
+                <p><?= $account->getPhone() ?></p>
+            <?php } ?>
+
+            <?php if ($account->getEmail()) { ?>
+                <p><?= $account->getEmail() ?></p>
+            <?php } ?>
+
+            <?php if ($account->getWebsite()) { ?>
+                <p><?= $account->getWebsite() ?></p>
+            <?php } ?>
+
+            <?php if ($account->getBillingUser() instanceof User) { ?>
+                <br/>
+                <h4>PIC: <?= $account->getBillingUser()->getName() ?></h4>
+
+                <?php if ($account->getBillingUser()->getContactNo()) { ?>
+                    <p><?= $account->getBillingUser()->getContactNo() ?></p>
+                <?php } ?>
+
+                <?php if ($account->getBillingUser()->getEmail()) { ?>
+                    <p><?= $account->getBillingUser()->getEmail() ?></p>
+                <?php } ?>
+
+            <?php } ?>
+
+        </div>
+        <div class="col-xs-2"></div>
+
+        <?php if ($purchase->getSupplier() instanceof Supplier) { ?>
+            <div class="col-xs-5 supplier">
+                <h4>Dari: <?= $purchase->getSupplier()->getName() ?></h4>
+
+                <?php if ($purchase->getSupplier()->getAddress()) { ?>
+                    <p><?= $purchase->getSupplier()->getAddress() ?></p>
+                <?php } ?>
+
+                <?php if ($purchase->getSupplier()->getContact()) { ?>
+                    <p><?= $purchase->getSupplier()->getContact() ?></p>
+                <?php } ?>
+
+                <?php if ($purchase->getSupplier()->getEmail()) { ?>
+                    <p><?= $purchase->getSupplier()->getEmail() ?></p>
+                <?php } ?>
+
+                <?php if ($purchase->getSupplier()->getWebsite()) { ?>
+                    <p><?= $purchase->getSupplier()->getWebsite() ?></p>
+                <?php } ?>
+
+            </div>
+        <?php } ?>
+    </div>
+
+    <br/>
+    <br/>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th>Kode</th>
+            <th>Qty.</th>
+            <th>Unit</th>
+            <th>Harga / Unit</th>
+            <th>Subtotal</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($purchase->getItems() as $item) { ?>
+            <tr>
+                <td>
+                    <?= $item->getItemName() ?>
+                </td>
+                <td>
+                    <?php if ($item->getStockPurchase()) { ?>
+                        <?= $item->getStockPurchase()->getStock()->getStockItem()->getCode() ?>
+                    <?php } else { ?>
+                        -
+                    <?php } ?>
+                </td>
+                <td>
+                    <?= $item->getQuantity() ?>
+                </td>
+                <td>
+                    <?= $item->getUnit() ?>
+                </td>
+                <td class="text-right">
+                    <small class="left grey"><?= $account->getDefaultCurrency() ?></small>
+                    <?= number_format($item->getUnitPrice(), 2) ?>
+                </td>
+                <td class="text-right">
+                    <small class="left grey"><?= $account->getDefaultCurrency() ?></small>
+                    <?= number_format($item->getSubtotal(), 2) ?>
+                </td>
+                <td class="text-right">
+                    <small class="left grey"><?= $account->getDefaultCurrency() ?></small>
+                    <?= number_format($item->getTotal(), 2) ?>
+                </td>
+            </tr>
+            <?php
+
+            $subtotal += (float)$item->getSubtotal();
+            $total += (float)$item->getTotal();
+
+            ?>
+        <?php } ?>
+        </tbody>
+        <tfoot>
+        <tr>
+            <th class="text-right" colspan="5">
+                <h4>Total</h4>
+            </th>
+            <td class="text-right">
+                <small class="left grey"><?= $account->getDefaultCurrency() ?></small>
+                <?= number_format($subtotal, 2) ?>
+            </td>
+            <td class="text-right">
+                <small class="left grey"><?= $account->getDefaultCurrency() ?></small>
+                <?= number_format($total, 2) ?>
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+
+    <br/>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Dibuat Oleh</th>
+            <th>Untuk Gudang</th>
+            <th>Tgl. Dibuat</th>
+            <th>Tgl. Order</th>
+            <th>Tgl. Diterima</th>
+            <th>Tgl. Dicetak</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>
+                <?php if ($purchase->getCreator() instanceof User) { ?>
+                    <?= $purchase->getCreator()->getName() ?>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+            </td>
+            <td>
+                <?php if ($purchase->getWarehousePurchase() instanceof WarehousePurchase) { ?>
+                    <?= $purchase->getWarehousePurchase()->getWarehouse()->getName() ?>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+            </td>
+            <td>
+                <?= $purchase->getCreatedAt()->format('d M Y') ?>
+            </td>
+            <td>
+                <?php if ($purchase->getOrderedAt()) { ?>
+                    <?= $purchase->getOrderedAt()->format('d M Y') ?>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+            </td>
+            <td>
+                <?php if ($purchase->getStatus() == Purchase::STATUS_DELIVERED) { ?>
+                    <?= $purchase->getDeliveredAt()->format('d M Y') ?>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+            </td>
+            <td>
+                <?= date('d M Y') ?>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="row">
+        <div class="col-xs-6">
+            <h4>Catatan</h4>
+            <p>
+                <?php if ($purchase->getNote()) { ?>
+                    <?= $purchase->getNote() ?>
+                <?php } else { ?>
+                    <em class="grey">Tidak ada catatan untuk pembelian ini</em>
+                <?php } ?>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+
+<script type="text/javascript">
+    window.print();
+</script>
+
+</body>
+</html>

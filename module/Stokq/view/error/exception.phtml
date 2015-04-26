@@ -1,0 +1,68 @@
+<div class="container-fluid pt15 pb15 pl40 pr40">
+
+    <h1 class="red mb0">Oops!</h1>
+    <h3 class="dark-grey mt0">Terjadi kesalahan saat memproses permintaan.</h3>
+
+    <?php if (isset($this->display_exceptions) && $this->display_exceptions): ?>
+
+        <?php if(isset($this->exception)): ?>
+            <hr/>
+            <h3>Additional Information:</h3>
+            <div class="alert alert-danger">Exception Type: <strong><?= get_class($this->exception) ?></strong></div>
+            <dl>
+                <dt>File</dt>
+                <dd><pre><?= $this->exception->getFile() ?>:<?= $this->exception->getLine() ?></pre></dd>
+
+                <dt>Message</dt>
+                <dd><pre><?= $this->escapeHtml($this->exception->getMessage()) ?></pre></dd>
+
+                <dt>Stack Trace</dt>
+                <dd><pre><?= $this->escapeHtml($this->exception->getTraceAsString()) ?></pre></dd>
+            </dl>
+
+            <?php /** @var \Exception $e */ $e = $this->exception->getPrevious() ?>
+            <?php if ($e): ?>
+
+                <hr/>
+                <h3>Previous Exceptions:</h3>
+
+                <?php while($e) : ?>
+                    <div class="alert alert-danger">Exception Type: <strong><?= get_class($e) ?></strong></div>
+                    <dl>
+                        <dt>File</dt>
+                        <dd><pre><?= $e->getFile() ?>:<?= $e->getLine() ?></pre></dd>
+
+                        <dt>Message</dt>
+                        <dd><pre><?= $this->escapeHtml($e->getMessage()) ?></pre></dd>
+
+                        <dt>Stack Trace</dt>
+                        <dd><pre><?= $this->escapeHtml($e->getTraceAsString()) ?></pre></dd>
+                    </dl>
+
+                    <?php $e = $e->getPrevious() ?>
+                <?php endwhile ?>
+
+            <?php endif ?>
+
+        <?php else: ?>
+
+            <h3>No Available Exceptions.</h3>
+
+        <?php endif ?>
+
+    <?php else: ?>
+
+        <p class="grey mt20">
+            Pesan kesalahan sudah otomatis terkirim, dan akan segera diverifikasi. <br/>
+            Kembali ke dasbor? silahkan <a href="/" class="green">klik disini</a>.
+        </p>
+
+        <p class="grey mt20">
+            Jika dirasa ini kritikal dan perlu untuk segera diperbaiki, silahkan kirim tiket untuk bantuan melalui <a
+                href="/index/help" class="green">halaman ini</a>. <br/>
+            Jangan lupa untuk mencantumkan detail terjadinya error untuk membantu tim kami dalam melakukan koreksi. <br/>
+            Terimakasih.
+        </p>
+
+    <?php endif ?>
+</div>

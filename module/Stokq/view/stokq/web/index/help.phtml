@@ -1,0 +1,41 @@
+<div class="container-fluid pt15 pb15">
+
+    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-support fa-2x"></i> Support &amp; Bantuan</h2>
+
+    <nav class="navbar alt navbar-default">
+        <div class="container">
+            <ul class="nav navbar-nav">
+                <li><a href="/setting/general">Setting Umum</a></li>
+                <li><a href="/setting/change-password">Ganti Password</a></li>
+                <li><a href="/user">User &amp; Grup</a></li>
+                <li class="active"><a href="#" onclick="return false;">Support &amp; Bantuan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="pl20 pr20">
+        <div class="row">
+            <div class="col-xs-12">
+
+                <?= $this->message() ?>
+                <?= $this->flash() ?>
+
+                <form action="" method="post" class="form-horizontal grey">
+
+                    <div class="row">
+                        <div class="col-md-7">
+
+                            <?= $this->form($this->helpForm, 'horizontal') ?>
+
+                            <div class="form-group text-right pr15">
+                                <button type="submit" class="btn alt green"> <i class="fa fa-envelope-o"></i> Send Message </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>

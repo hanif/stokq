@@ -1,0 +1,98 @@
+<div class="panel-group" role="tablist" aria-multiselectable="true" id="outlet-accordion">
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#outlet-accordion" href="#add-form-panel" aria-expanded="false" aria-controls="add-form-panel" class="collapsed">
+                    <i class="fa fa-plus-circle"></i> Tambah Outlet
+                </a>
+            </h4>
+        </div>
+        <div id="add-form-panel" class="panel-collapse collapse in" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+
+                <form action="/outlet/create" method="post" role="form" id="add-outlet-form">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Nama Outlet</label>
+                                <input type="text" name="name" value="" class="form-control" placeholder="Nama Outlet">
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Gudang</label>
+                                <select name="warehouse" class="form-control" title="Gudang">
+                                    <?php foreach ($this->warehouses as $warehouse) { ?>
+                                        <option value="<?= $warehouse['id'] ?>"><?= $warehouse['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Alamat</label>
+                                <textarea name="address" rows="3" class="form-control" placeholder="Alamat"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="1" checked="checked">
+                                    Tambahkan menu yang ada sebagai menu yang tersedia di outlet ini.
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="0">
+                                    Saya akan menambahkan menu ke dalam outlet secara manual.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <small class="block text-center">
+                                <a href="#" class="grey" data-toggle="#outlet-more-options">opsi lainnya <i class="fa fa-caret-down"></i></a>
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="init-hidden" id="outlet-more-options">
+
+                        <hr class="mt10 mb10"/>
+
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label class="control-label">Latitude</label>
+                                    <input type="text" name="latitude" value="" class="form-control" placeholder="Latitude">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label class="control-label">Longitude</label>
+                                    <input type="text" name="longitude" value="" class="form-control" placeholder="Longitude">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label class="control-label">Deskripsi/Catatan</label>
+                                    <textarea name="description" rows="3" class="form-control" placeholder="Deskripsi/Catatan"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mt10 mb10"/>
+
+                    <div class="form-group mb0 block text-right">
+                        <button type="submit" class="btn alt green"><i class="fa fa-save"></i> Simpan</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

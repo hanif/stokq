@@ -1,0 +1,179 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Menu;
+use Stokq\Entity\Stock;
+use Stokq\Entity\StorageType;
+use Stokq\Entity\User;
+use Stokq\Entity\Warehouse;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var User $user */
+$user = $this->user;
+
+/** @var Menu[] $menus */
+$menus = $this->menus;
+
+/** @var StorageType[] $types */
+$types = $this->types;
+
+/** @var Warehouse[] $warehouses */
+$warehouses = $this->warehouses;
+
+/** @var Stock[] $list */
+$list = $this->list;
+
+?>
+
+<div class="container-fluid pt15 pb15">
+
+    <div class="inline-block middle ml-10 mb10">
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/warehouse">List Gudang</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/stock-item">List Bahan Makanan</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/purchase">Tabel Belanja</a>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="row well green card alt-form ml0 mr0 pt5 pl0 pr0 pb10 mb0">
+                <form action="">
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label class="control-label">Keyword</label>
+                            <input type="text" name="q" value="<?= $this->keyword ?>" class="form-control" placeholder="Keyword">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Gudang</label>
+                            <div class="block">
+                                <select name="warehouse" title="Gudang" data-ui="select2" class="form-control">
+                                    <option value="">-</option>
+                                    <?php foreach ($warehouses as $wh) { ?>
+                                        <option value="<?= $wh->getId() ?>" <?php if ($wh->getId() == $this->warehouse) { ?> selected <?php } ?>>
+                                            <?= $wh->getName() ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Jenis</label>
+                            <div class="block">
+                                <select name="type" title="Jenis" data-ui="select2" class="form-control">
+                                    <option value="">-</option>
+                                    <?php foreach ($types as $ty) { ?>
+                                        <option value="<?= $ty->getId() ?>" <?php if ($ty->getId() == $this->type) { ?> selected <?php } ?>>
+                                            <?= $ty->getName() ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Digunakan Dlm</label>
+                            <div class="block">
+                                <select name="menu" title="Menu" data-ui="select2" class="form-control">
+                                    <option value="">-</option>
+                                    <?php foreach ($menus as $mn) { ?>
+                                        <option value="<?= $mn->getId() ?>" <?php if ($mn->getId() == $this->menu) { ?> selected <?php } ?>>
+                                            <?= $mn->getName() ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp;</label>
+                            <button type="submit" class="btn alt green uppercase form-control"> <i class="fa fa-search"></i> Cari </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="table-responsive">
+                <table class="table low-stock table-bordered table-hover dark-grey mt-1">
+                    <thead>
+                    <tr>
+                        <th>Item / Gudang</th>
+                        <th>Kode</th>
+                        <th>Jenis</th>
+                        <th>Level</th>
+                        <th>Batas<br/>Minimum</th>
+                        <th>Koreksi<br/>Terakhir</th>
+                        <th>Belanja<br/>Terakhir</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list" class="middle">
+                    <?php if (count($list)) { ?>
+                        <?php foreach ($list as $item) { ?>
+                            <tr>
+                                <td>
+                                    <strong class="block">
+                                        #<?= $item->getId() ?> : <?= $item->getStockItem()->getName() ?>
+                                    </strong>
+
+                                    <small class="grey block"><?= $item->getWarehouse()->getName() ?></small>
+                                </td>
+                                <td class="grey">
+                                    <?= $item->getStockItem()->getCode() ?: '-' ?>
+                                </td>
+                                <td>
+                                    <?= $item->getStockItem()->getType() ? $item->getStockItem()->getType()->getName() : '' ?>
+                                </td>
+                                <td>
+                                    <?php if ($item->getCurrentLevel() <= 0) { ?>
+                                        <span class="smaller red square"></span>
+                                    <?php } else { ?>
+                                        <span class="smaller yellow square"></span>
+                                    <?php } ?>
+
+                                    <strong>
+                                        <?= number_format($item->getCurrentLevel() / $item->getStockItem()->getStorageUnit()->getRatio(), 2) ?>
+                                        <?= $item->getStockItem()->getStorageUnit()->getName() ?>
+                                    </strong>
+                                </td>
+                                <td>
+                                    <?php if ($item->getReorderLevel()) { ?>
+                                        <?= number_format($item->getReorderLevel() / $item->getStockItem()->getStorageUnit()->getRatio(), 2) ?>
+                                        <?= $item->getStockItem()->getStorageUnit()->getName() ?>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if ($item->getLastChange() instanceof DateTime) { ?>
+                                        <?= $item->getLastChange()->format('M d, Y') ?>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if ($item->getLastPurchase() instanceof DateTime) { ?>
+                                        <?= $item->getLastPurchase()->format('M d, Y') ?>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="7">
+                                <p class="grey mt10 pl10"><i class="fa fa-warning"></i> Tidak ada item saat ini.</p>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

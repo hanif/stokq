@@ -1,0 +1,263 @@
+<?php
+
+use Stokq\Entity\Log;
+use Stokq\Entity\OutletSale;
+use Stokq\Entity\Sale;
+use Stokq\Entity\User;
+use Stokq\Message\Log\SaleLog;
+
+/** @var Sale $sale */
+$sale = $this->sale;
+
+/** @var Log[] $logs */
+$logs = $this->logs;
+
+?>
+
+<script type="text/javascript" src="/vendor/jquery-mask/jquery.mask.min.js"></script>
+<script type="text/javascript" src="/vendor/accounting.js/accounting.min.js"></script>
+<script>
+    var editSaleForm,
+        saveBtn;
+
+    function deleteItem(target) {
+        $(target).closest('tr').remove();
+        return false;
+    }
+
+    function computeSubtotal() {
+        $('[data-quantity], [data-price]').on('keyup change', function() {
+            var target = $(this),
+                tr = target.closest('tr'),
+                price = tr.find('[data-price]'),
+                qty = tr.find('[data-quantity]'),
+                subtotal = accounting.unformat(qty.val()) * accounting.unformat(price.val());
+
+            $('[data-subtotal]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+            $('[data-total]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+        });
+    }
+
+    function computeTotalSummary() {
+        var totalData = $('[data-total]'),
+            subtotalData = $('[data-subtotal]'),
+            total = 0,
+            subtotal = 0;
+
+        totalData.each(function(k, v) {
+            var node = $(v),
+                val = parseFloat(accounting.unformat(node.val()));
+            if (!isNaN(val) && (val > 0)) {
+                total += val;
+            }
+        });
+        $('[data-total-summary]').val(accounting.formatNumber(total, 0));
+
+        subtotalData.each(function(k, v) {
+            var node = $(v),
+                val = parseFloat(accounting.unformat(node.val()));
+            if (!isNaN(val) && (val > 0)) {
+                subtotal += val;
+            }
+        });
+        $('[data-subtotal-summary]').val(accounting.formatNumber(subtotal, 0));
+    }
+
+    $(document).ready(function () {
+
+        saveBtn = $('#save-btn');
+        editSaleForm = $('#edit-sale-form');
+
+        ajaxForm(editSaleForm, {
+            before: function() {
+                var total = parseFloat(accounting.formatNumber($('[data-total-summary]').val()));
+                if (total <= 0) {
+                    alert('Total amount is empty.');
+                    return false;
+                }
+                return true;
+            },
+            ok: function(data, status) {
+                if (status == 'success') {
+                    window.location.href = '/sale/edit?id=<?= $sale->getId() ?>';
+                }
+            },
+            busy: function() {
+                saveBtn.attr('disabled', 'disabled');
+                $('span', saveBtn).text('Saving data...');
+            },
+            done: function() {
+                saveBtn.removeAttr('disabled');
+                $('span', saveBtn).text('Save Changes');
+            }
+        });
+
+
+        $('[data-subtotal]').on('keyup change', function() { computeTotalSummary(); });
+        $('[data-total]').on('keyup change', function() { computeTotalSummary(); });
+
+        computeSubtotal();
+        computeTotalSummary();
+
+        $('[data-total], [data-subtotal], [data-price], [data-quantity]').mask("#,##0", {reverse: true});
+    });
+</script>
+
+<form action="/sale/update?id=<?= $sale->getId() ?>" method="post" class="form alt-form" id="edit-sale-form">
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bb1s">
+        <h3 class="dark-grey mb0 pb0">
+            Edit Data Penjualan #<?= $sale->getId() ?>
+        </h3>
+        <?php if ($sale->getCreator() instanceof User) { ?>
+            <small class="grey">Ditambahkan oleh &lsquo;<?= $sale->getCreator()->getName() ?>&rsquo; pada <?= $sale->getCreatedAt()->format('d M Y') ?>.</small>
+        <?php } ?>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-light-yellow bb1s">
+        <div class="row form-alt">
+            <div class="col-sm-10">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Judul</label>
+                            <input type="text" name="title" value="<?= $sale->getTitle() ?>" class="form-control" placeholder="Judul">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Jenis</label>
+                            <select name="type" class="form-control" title="Jenis">
+                                <option value="recap" <?= $sale->getType() == 'recap' ? 'selected' : '' ?>>Rekap</option>
+                                <option value="order"<?= $sale->getType() == 'order' ? 'selected' : '' ?>>Order</option>
+                                <option value="other"<?= $sale->getType() == 'other' ? 'selected' : '' ?>>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Tgl Order</label>
+                            <input type="text" name="ordered_at" value="<?= $sale->getOrderedAt() ? $sale->getOrderedAt()->format('M d, Y') : '' ?>" class="form-control" placeholder="Tgl Order" data-ui="datepicker" data-format="M dd, yy">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Outlet</label>
+                            <?php if ($sale->getOutletSale() instanceof OutletSale) { ?>
+                                <input type="text" value="<?= $sale->getOutletSale()->getOutlet()->getName() ?>" class="form-control" placeholder="Outlet" disabled>
+                                <input name="outlet" type="hidden" value="<?= $sale->getOutletSale()->getOutlet()->getId() ?>"/>
+                            <?php } else { ?>
+                                <input type="text" value="-" class="form-control" placeholder="Outlet" disabled>
+                                <input name="outlet" type="hidden" value=""/>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Dibuat Oleh</label>
+                            <input type="text" value="<?= $sale->getCreator() ? $sale->getCreator()->getName() : '' ?>" class="form-control" placeholder="" disabled/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid p20">
+        <div class="row">
+
+            <div class="col-sm-12">
+
+                <div class="table-responsive" style="overflow-y: hidden;">
+                    <h4 class="alt-heading-4">Item Penjualan</h4>
+
+                    <div class="raw-items-errors">
+                        <div data-error-for="raw_items"></div>
+                    </div>
+
+                    <table class="table table-bordered p6 sale-items mt20">
+                        <thead>
+                        <tr>
+                            <th style="width: 35%;">Item</th>
+                            <th style="width: 15%;">Harga/Unit</th>
+                            <th style="width: 10%;">Qty</th>
+                            <th style="width: 20%;">Subtotal</th>
+                            <th style="width: 20%;">Total</th>
+                        </tr>
+                        </thead>
+                        <tbody id="sale-item-rows">
+                        <?php foreach ($sale->getItems() as $key => $item) { ?>
+                            <tr>
+                                <td>
+                                    <input type="text" name="raw_items[<?= $key ?>][item_name]"
+                                           value="<?= $item->getItemName() ?>" class="alt form-control" placeholder="" readonly/>
+                                    <?php if ($item->getMenuSale()) { ?>
+                                        <input name="raw_items[<?= $key ?>][menu_price]" type="hidden"
+                                               value="<?= $item->getMenuSale()->getMenuPrice()->getId() ?>">
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <input type="text" name="raw_items[<?= $key ?>][unit_price]" data-price
+                                           value="<?= (int)$item->getUnitPrice() ?>" class="alt form-control" placeholder=""/>
+                                </td>
+                                <td>
+                                    <input type="text" name="raw_items[<?= $key ?>][quantity]" data-quantity
+                                           value="<?= (int)$item->getQuantity() ?>" class="alt form-control" placeholder=""/>
+                                </td>
+                                <td>
+                                    <input type="text" name="raw_items[<?= $key ?>][subtotal]" data-subtotal
+                                           value="<?= (int)$item->getSubtotal() ?>" class="alt form-control" placeholder="" readonly/>
+                                </td>
+                                <td>
+                                    <input type="text" name="raw_items[<?= $key ?>][total]" data-total
+                                           value="<?= (int)$item->getTotal() ?>" class="alt form-control" placeholder=""/>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right grey uppercase middle"><strong>Total</strong></td>
+                            <td class="text-right">
+                                <input class="alt form-control text-right" type="text" disabled value="0" placeholder="" data-subtotal-summary />
+                            </td>
+                            <td class="text-right">
+                                <input class="alt form-control text-right" type="text" disabled value="0" placeholder="" data-total-summary />
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bt1s">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="control-label">Catatan</label>
+                    <textarea name="note" rows="4" class="form-control" placeholder="Catatan"><?= $sale->getNote() ?></textarea>
+                </div>
+                <button type="submit" class="btn alt green mt20" id="save-btn"><i class="fa fa-save"></i> <span>Simpan</span></button>
+            </div>
+            <div class="col-sm-6">
+                <h4 class="alt-heading-4">
+                    Log Aktivitas
+                </h4>
+
+                <ul class="logs">
+                    <?php foreach ($logs as $log) { ?>
+                        <li>
+                            <strong class="green"><?= $log->getCreatedAt()->format('M d, Y - H:i') ?></strong>
+                            <span class="grey"> &mdash; <?= new SaleLog($log) ?></span>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <input name="currency" type="hidden" value="<?= $account->getDefaultCurrency() ?>"/>
+</form>

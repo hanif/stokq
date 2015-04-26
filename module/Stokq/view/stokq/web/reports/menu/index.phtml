@@ -1,0 +1,115 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Outlet;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var Outlet[] $outlets */
+$outlets = $this->outlets;
+
+?>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="/js/chart.js"></script>
+<script>
+
+    google.load('visualization', '1.1', {
+        packages: ['corechart', 'bar', 'line'],
+        language: '<?= $account->getDefaultLocale() ?>'
+    });
+
+    GoogleOnLoadCallback(function() {
+
+        var numberFormatter = NumberFormatter({ format: '#,###', prefix: '<?= $account->getDefaultCurrency() ?> ' }),
+            ratioByQuantityDT = ArrayToDataTable(<?= json_encode($this->ratioByQuantity) ?>),
+            ratioByTotalDT = ArrayToDataTable(<?= json_encode($this->ratioByTotal) ?>);
+
+        new PieChart().data(ratioByQuantityDT).draw('quantity-sold-ratio');
+
+        numberFormatter.format(ratioByTotalDT, 1);
+        new PieChart().data(ratioByTotalDT).draw('total-sold-ratio');
+
+    });
+
+</script>
+
+<div class="container-fluid pt15 pb15">
+
+    <h2 class="dark-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-money fa-2x"></i> Qty. dan Total Terjual</h2>
+    <small class="grey">Manampilkan rasio penjualan di semua outlet dalam 6 bulan terakhir</small>
+
+    <hr/>
+
+    <div class="row">
+        <div class="content clearfix">
+
+            <div class="col-xs-12 col-md-6">
+                <div class="pie-chart-container">
+                    <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Qty. Terjual</h2>
+                    <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                    <div id="quantity-sold-ratio" class="pie-chart" style="min-height: 380px;"></div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="pie-chart-container">
+                    <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Total Terjual - <?= $account->getDefaultCurrency() ?></h2>
+                    <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                    <div id="total-sold-ratio" class="pie-chart" style="min-height: 380px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <?php foreach ($outlets as $outlet) { ?>
+
+        <h2 class="dark-grey mt40 mb0 narrow-spaced uppercase normal"><i class="fa fa-sitemap fa-2x"></i> Outlet: <?= $outlet->getName() ?></h2>
+        <small class="grey">Manampilkan rasio penjualan di outlet "<?= $outlet->getName() ?>" dalam 6 bulan terakhir</small>
+
+        <hr/>
+
+        <div class="row">
+            <div class="content clearfix">
+
+                <div class="col-xs-12 col-md-6">
+                    <div class="pie-chart-container">
+                        <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Qty. Terjual (<?= $outlet->getName() ?>)</h2>
+                        <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                        <div id="quantity-sold-ratio-outlet-<?= $outlet->getId() ?>" class="pie-chart" style="min-height: 380px;"></div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-md-6">
+                    <div class="pie-chart-container">
+                        <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Total Terjual - <?= $account->getDefaultCurrency() ?> (<?= $outlet->getName() ?>)</h2>
+                        <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                        <div id="total-sold-ratio-outlet-<?= $outlet->getId() ?>" class="pie-chart" style="min-height: 380px;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script>
+
+            GoogleOnLoadCallback(function() {
+
+                var numberFormatter = NumberFormatter({ format: '#,###', prefix: '<?= $account->getDefaultCurrency() ?> ' }),
+                    ratioByQuantityOutlet<?= $outlet->getId() ?>DT = ArrayToDataTable(<?= json_encode($this->qtyRatioByOutlets[$outlet->getId()]) ?>),
+                    ratioByTotalOutlet<?= $outlet->getId() ?>DT = ArrayToDataTable(<?= json_encode($this->totalRatioByOutlets[$outlet->getId()]) ?>);
+
+                new PieChart().data(ratioByQuantityOutlet<?= $outlet->getId() ?>DT).draw('quantity-sold-ratio-outlet-<?= $outlet->getId() ?>');
+
+                numberFormatter.format(ratioByTotalOutlet<?= $outlet->getId() ?>DT, 1);
+                new PieChart().data(ratioByTotalOutlet<?= $outlet->getId() ?>DT).draw('total-sold-ratio-outlet-<?= $outlet->getId() ?>');
+
+            });
+
+        </script>
+
+    <?php } ?>
+
+</div>

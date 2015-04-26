@@ -1,0 +1,240 @@
+<div class="panel-group" role="tablist" aria-multiselectable="true" id="stock-accordion">
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#stock-accordion" href="#add-form-panel" aria-expanded="false" aria-controls="add-form-panel" class="collapsed">
+                    <i class="fa fa-plus-circle"></i> Tambah Item
+                </a>
+            </h4>
+        </div>
+        <div id="add-form-panel" class="panel-collapse collapse in" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+
+                <form action="/stock-item/create" method="post" role="form" id="add-stock-item-form">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Nama Item</label>
+                                <input type="text" name="name" value="" class="form-control" placeholder="Nama Item">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Kode</label>
+                                <input type="text" name="code" value="" class="form-control" placeholder="# XXX-XXX">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Jenis Satuan</label>
+                                <select name="unit_type" class="form-control" title="Jenis Satuan">
+                                    <option value=""></option>
+                                    <?php foreach ($this->unitTypes as $unitType) { ?>
+                                        <option value="<?= $unitType['id'] ?>"><?= $unitType['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Stock Unit</label>
+                                <select name="storage_unit" class="form-control" title="Satuan di Gudang" disabled>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Usage Unit</label>
+                                <select name="usage_unit" class="form-control" title="Satuan Penggunaan" disabled>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Jenis</label>
+                                <select name="type" class="form-control" title="Jenis Penyimpanan">
+                                    <?php foreach ($this->storageTypes as $storageType) { ?>
+                                        <option value="<?= $storageType['id'] ?>"><?= $storageType['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Kategori</label>
+                                <select name="categories[]" class="form-control" title="Kategori" multiple="multiple" data-ui="select2">
+                                    <?php foreach ($this->categories as $category) { ?>
+                                        <option value="<?= $category['id'] ?>"><?= $category['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="1" checked="checked">
+                                    Tambahkan item ini di semua gudang.
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="0">
+                                    Saya akan menambahkan item ini di gudang secara manual.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <small class="block text-center">
+                                <a href="#" class="grey" data-toggle="#stock-more-options">opsi lainnya <i class="fa fa-caret-down"></i></a>
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="init-hidden" id="stock-more-options">
+
+                        <hr class="mt10 mb10"/>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label class="control-label">Deskripsi</label>
+                                    <textarea name="description" rows="3" class="form-control" placeholder="Deskripsi"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label class="control-label">Catatan</label>
+                                    <textarea name="note" rows="3" class="form-control" placeholder="Catatan"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mt10 mb10"/>
+
+                    <div class="form-group mb0 block text-right">
+                        <button type="submit" class="btn alt green"><i class="fa fa-save"></i> Simpan</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#stock-accordion" href="#category-panel" aria-expanded="false" aria-controls="help-panel">
+                    Kategori
+                </a>
+            </h4>
+        </div>
+        <div id="category-panel" class="panel-collapse collapse" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+                <form action="/category/create" method="post" class="form-vertical" role="form" id="add-category-form">
+                    <div class="form-group">
+                        <label class="control-label">Nama Kategori</label>
+                        <input type="text" name="name" value="" class="form-control" placeholder="Nama Kategori">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn alt green form-control"><i class="fa fa-save"></i> Tambah</button>
+                    </div>
+                </form>
+
+                <table class="table table-bordered">
+                    <tbody id="category-list">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#stock-accordion" href="#type-panel" aria-expanded="false" aria-controls="help-panel">
+                    Jenis Penyimpanan
+                </a>
+            </h4>
+        </div>
+        <div id="type-panel" class="panel-collapse collapse" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+                <form action="/storage-type/create" method="post" class="form-vertical" role="form" id="add-storage-type-form">
+                    <div class="form-group">
+                        <label class="control-label">Nama</label>
+                        <input type="text" name="name" value="" class="form-control" placeholder="Nama">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn alt green form-control"><i class="fa fa-save"></i> Tambah</button>
+                    </div>
+                </form>
+
+                <table class="table table-bordered">
+                    <tbody id="storage-type-list">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#stock-accordion" href="#unit-panel" aria-expanded="false" aria-controls="help-panel">
+                    Satuan Penyimpanan
+                </a>
+            </h4>
+        </div>
+        <div id="unit-panel" class="panel-collapse collapse" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+                <form action="/stock-unit/create" method="post" class="form-vertical" role="form" id="add-unit-form">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="control-label">Nama</label>
+                                <input type="text" name="name" value="" class="form-control" placeholder="Nama">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="control-label">Deskripsi</label>
+                                <input type="text" name="description" value="" class="form-control" placeholder="Deskripsi">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label">Jenis Satuan</label>
+                                <select name="type" class="form-control" title="Jenis Satuan">
+                                    <?php foreach ($this->unitTypes as $type) { ?>
+                                        <option value="<?= $type['id'] ?>"><?= $type['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label">Ratio</label>
+                                <input type="number" name="ratio" value="" class="form-control" placeholder="Type Ratio" step="0.000001">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn alt green form-control"><i class="fa fa-save"></i> Tambah</button>
+                    </div>
+                </form>
+
+                <table class="table table-bordered">
+                    <tbody id="unit-list">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>

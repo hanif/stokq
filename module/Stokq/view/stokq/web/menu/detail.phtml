@@ -1,0 +1,509 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\IngredientType;
+use Stokq\Entity\Menu;
+use Stokq\Entity\StockItem;
+
+/** @var Menu $menu */
+$menu = $this->menu;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var StockItem[] $stockItems */
+$stockItems = $this->stockItems;
+
+/** @var IngredientType[] $ingredients */
+$ingredients = $this->ingredients;
+
+/** @var IngredientType[] $ingredientTypes */
+$ingredientTypes = $this->ingredientTypes;
+
+/** @var number $materialPrice */
+$materialPrice = 0;
+
+?>
+
+<script>
+
+    function validateAddingIngredient(target) {
+        if (!$('[name=stock_item]', $(target)).val()) {
+            alert('Nama bahan belum dipilih.');
+            return false;
+        }
+        return true;
+    }
+
+</script>
+
+<div class="container-fluid pt5 pb20 pl20 pr20 bg-grey">
+    <h2 class="dark-grey mb0 pb0">
+        <?= $menu->getName() ;?>
+    </h2>
+
+    <?php if ($menu->getParent()) { ?>
+        <span class="grey">Varian dari &ldquo;<?= $menu->getParent()->getName() ?>&rdquo;</span>
+    <?php } else { ?>
+        <?php $variants = $menu->getVariants()->count() ?>
+        <?php if ($variants > 0) { ?>
+            <span class="grey">Menu ini punya <?= $variants ?> varian</span>
+        <?php } else { ?>
+            <span class="grey">Menu ini tidak punya varian.</span>
+        <?php } ?>
+    <?php } ?>
+
+</div>
+
+<div role="tabpanel">
+
+    <ul class="nav nav-tabs alt bg-grey" role="tablist">
+        <li role="presentation" class="active ml20">
+            <a href="#tab-ingredient" aria-controls="tab-ingredient" role="tab" data-toggle="tab">Bahan Pembuatan</a>
+        </li>
+        <li role="presentation">
+            <a href="#tab-menu-price" aria-controls="tab-menu-price" role="tab" data-toggle="tab">Harga/Outlet</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="tab-ingredient">
+            <div class="container-fluid p20">
+
+                <div class="row">
+                    <div class="col-sm-7">
+
+                        <?= $this->message() ?>
+                        <?= $this->flash() ?>
+
+                        <div id="add-ingredient-form-container" class="">
+                            <div class="well card">
+                                <form action="/ingredient/create-redirect" method="post" id="add-ingredient-form" onsubmit="return validateAddingIngredient(this);">
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Bahan</label>
+                                                <select name="stock_item" class="form-control" title="Nama Bahan" data-ui="select2">
+                                                    <option value=""></option>
+                                                    <?php foreach ($stockItems as $stockItem) { ?>
+                                                        <option data-unit="<?= $stockItem->getUsageUnit()->getName() ?>"
+                                                                value="<?= $stockItem->getId() ?>"><?= $stockItem->getName() ?></option>
+                                                    <?php } ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Jenis</label>
+                                                <select name="type" class="form-control" title="Jenis" data-ui="select2">
+                                                    <?php foreach ($ingredientTypes as $ingredientType) { ?>
+                                                        <option value="<?= $ingredientType->getId() ?>"><?= $ingredientType->getName() ?></option>
+                                                    <?php } ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Qty</label>
+                                                <div class="input-group">
+                                                    <input type="number" name="quantity" value="0" class="form-control" placeholder="Qty" min="0" step="0.0001">
+                                                    <span class="input-group-addon" data-qty-unit></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Harga / Qty</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><?= $account->getDefaultCurrency() ?></span>
+                                                    <input type="number" name="qty_price" value="0" class="form-control" placeholder="Harga / Qty" min="0" step="1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="form-group">
+                                                <textarea name="note" rows="2" class="form-control" placeholder="Catatan"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb0 block text-right">
+                                        <button type="submit" class="btn alt green"><i class="fa fa-plus"></i> Tambah Bahan</button>
+                                    </div>
+
+                                    <input name="menu" type="hidden" value="<?= $menu->getId() ?>"/>
+                                </form>
+                            </div>
+                        </div>
+
+                        <?php foreach ($ingredients as $type) { ?>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" id="ingredient-table">
+                                    <thead>
+                                    <tr>
+                                        <td colspan="5" class="bg-grey pl15">
+                                            <h5 class="dark-grey uppercase mb0">
+                                                <?= $type->getName() ?>
+                                            </h5>
+                                            <small class="grey">
+                                                Untuk mengedit qty / harga, ganti angka di dalam kotak lalu tekan enter untuk menyimpan.
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th style="width: 50px;"></th>
+                                        <th style="min-width: 150px;">Bahan</th>
+                                        <th style="max-width: 100px;">Qty.</th>
+                                        <th style="max-width: 100px;">Harga/Qty.</th>
+                                        <th style="min-width: 100px;">Catatan</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="ingredient-list-<?= $type->getId() ?>">
+                                    <?php foreach ($type->getIngredients() as $ingredient) { ?>
+
+                                        <?php $materialPrice += $ingredient->getQtyPrice() ?>
+
+                                        <tr>
+                                            <td class="middle center">
+                                                <a href="/ingredient/delete?id=<?= $ingredient->getId() ?>" class="btn btn-delete btn-xs" data-delete>
+                                                    <i class="fa fa-times"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <?= $ingredient->getStockItem()->getName() ?>
+                                                <br/>
+                                                <small class="grey">
+                                                    <?= $ingredient->getStockItem()->getCode() ?>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <fieldset>
+                                                    <input name="id" type="hidden" value="<?= $ingredient->getId() ?>"/>
+                                                    <div class="input-group">
+                                                        <input class="form-control" type="number" name="quantity" min="0" step="0.001"
+                                                               value="<?= $ingredient->getQuantity() ?>" placeholder="Quantity"
+                                                               data-value="<?= $ingredient->getQuantity() ?>" data-quantity/>
+                                                        <span class="input-group-addon"><?= $ingredient->getStockItem()->getUsageUnit()->getName() ?></span>
+                                                    </div>
+                                                </fieldset>
+                                            </td>
+                                            <td>
+                                                <fieldset>
+                                                    <input name="id" type="hidden" value="<?= $ingredient->getId() ?>"/>
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon"><?= $account->getDefaultCurrency() ?></span>
+                                                        <input class="form-control" type="number" name="qty_price" min="0" step="1"
+                                                               value="<?= $ingredient->getQtyPrice() ?>" placeholder="Harga/Qty."
+                                                               data-value="<?= $ingredient->getQtyPrice() ?>" data-qty-price/>
+                                                    </div>
+                                                </fieldset>
+                                            </td>
+                                            <td>
+                                                <fieldset>
+                                                    <input name="id" type="hidden" value="<?= $ingredient->getId() ?>"/>
+                                                    <input class="form-control" type="text" name="note"
+                                                           value="<?= $ingredient->getNote() ?>" placeholder="Catatan"
+                                                           data-value="<?= $ingredient->getNote() ?>" data-note/>
+                                                </fieldset>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php } ?>
+
+                    </div>
+                    <div class="col-sm-5">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th colspan="2">
+                                        <h5 class="grey uppercase">
+                                            Rincian
+                                        </h5>
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <span class="grey">
+                                            Harga jual dan harga bahan bisa erubah dan bervariasi di setiap outlet.
+                                        </span>
+                                    </td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <th>Harga Jual</th>
+                                    <td class="text-right">
+                                        <small class="grey left"><?= $account->getDefaultCurrency() ?></small>
+                                        <span data-default-price><?= number_format($menu->getDefaultPrice(), 2) ?></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Harga Bahan</th>
+                                    <td class="text-right">
+                                        <small class="grey left"><?= $account->getDefaultCurrency() ?></small>
+                                        <span class="red" data-production-price><?= number_format($materialPrice, 2) ?></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Bruto (Gross)</th>
+                                    <td class="text-right">
+                                        <small class="grey left"><?= $account->getDefaultCurrency() ?></small>
+                                        <span class="green" data-gross><?= number_format($menu->getDefaultPrice() - $materialPrice, 2) ?></span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pie-chart-container">
+                            <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Perbandingan Bahan</h2>
+                            <span class="grey mb10 block">Berdasarkan harga/qty</span>
+                            <div id="ingredient-ratio" class="pie-chart" style="min-height: 380px;"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="tab-menu-price">
+            <div class="container-fluid pt20 pb20">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped menu-price" id="price-table">
+                                <thead>
+                                <tr>
+                                    <th style="width: 50px;" rowspan="2"></th>
+                                    <th style="min-width: 200px;" rowspan="2">Outlet</th>
+                                    <th colspan="2">Penjualan 1 Bln Terakhir</th>
+                                    <th style="width: 300px;" rowspan="2">Harga</th>
+                                </tr>
+                                <tr>
+                                    <th style="width: 130px;">Qty</th>
+                                    <th style="width: 170px;">Total</th>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="bg-grey pl15">
+                                        <i class="fa fa-warning mr5"></i>
+                                        Untuk mengedit harga menu, ganti angka di dalam kotak lalu tekan enter untuk menyimpannya.
+                                    </td>
+                                </tr>
+                                </thead>
+                                <tbody id="price-list">
+                                <?php foreach ($this->prices as $price) { ?>
+                                    <tr>
+                                        <td class="middle center">
+                                            <?php if (isset($price['price_id'])) { ?>
+                                                <a href="/menu-price/delete?id=<?= $price['price_id'] ?>" class="btn btn-delete btn-xs" data-delete>
+                                                    <i class="fa fa-times"></i>
+                                                </a>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?= $price['outlet_name'] ?>
+                                        </td>
+                                        <td>
+                                            <small class="grey left"><?= ($price['serving_unit'] ?: 'item') ?>: </small>
+                                            <strong class="grey"><?= ($price['sale_quantity'] ?: '-') ?></strong>
+                                        </td>
+                                        <td>
+                                            <span class="grey left"><?= $account->getDefaultCurrency() ?></span>
+                                            <strong class="grey"><?= number_format($price['sale_subtotal'], 2) ?></strong>
+                                        </td>
+                                        <td>
+                                            <fieldset>
+                                                <?php if (isset($price['price_id']) && isset($price['price'])) { ?>
+                                                    <div class="input-group">
+                                                        <input name="id" type="hidden" value="<?= $price['price_id'] ?>"/>
+                                                        <span class="input-group-addon"><?= $account->getDefaultCurrency() ?></span>
+                                                        <input class="form-control" type="number" name="price" min="0" step="0.01"
+                                                               value="<?= $price['price'] ?>" placeholder="Price"
+                                                               data-value="<?= $price['price'] ?>" data-price/>
+                                                        <span class="input-group-addon"> / <?= $price['serving_unit'] ?></span>
+                                                    </div>
+                                                <?php } else { ?>
+                                                    <p class="block text-center m0 p0 pt5">
+                                                        <a data-create-menu-price class="grey" href="/menu-price/create?menuId=<?= $menu->getId() ?>&outletId=<?= $price['outlet_id'] ?>">
+                                                            <i class="fa fa-plus fa-2x"></i>
+                                                        </a>
+                                                    </p>
+                                                <?php } ?>
+                                            </fieldset>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<?php include '_ingredient_item.tpl' ?>
+<?php include '_menu-price-row.tpl' ?>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="<?='/js/chart.js'?>"></script>
+<script type="text/javascript" src='<?='/vendor/accounting.js/accounting.min.js'?>'></script>
+<script>
+
+    function deletableItem(elem) {
+        $(elem).on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var target = $(this);
+            if (confirm('Yakin ingin menghapus item yang dipilih?')) {
+                $.ajax({
+                    url: target.attr('href'),
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function() {
+                        target.closest('tr').fadeOut('fast');
+                    },
+                    error: function() {
+                        alert('Tidak dapat menghapus item untuk saat ini, cobalah beberapa saat lagi.')
+                    }
+                });
+            }
+        });
+    }
+
+    function markAsChanged(elem) {
+        $(elem).on('keyup', function() {
+            if ($(this).data('value') != $(this).val()) {
+                $(this).addClass('changed')
+            } else {
+                $(this).removeClass('changed')
+            }
+        });
+    }
+
+    function saveOnEnter(elems, url) {
+        elems.each(function() {
+            var el = $(this);
+
+            el.keypress(function(e) {
+                if (e.keyCode == 13 && (el.val() != el.data('value'))) {
+                    $.ajax({
+                        url: url,
+                        data: el.closest('fieldset').serialize(),
+                        dataType: 'json',
+                        method: 'post',
+                        success: function(resp) {
+                            el.attr('value', el.val());
+                            el.attr('data-value', el.val());
+                            el.removeClass('changed');
+                        },
+                        error: function() {
+                            alert('Tidak dapat meng-update item yang dipilih, cobalah beberapa saat lagi.')
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    var ingredientList = $('#ingredient-list'),
+        addIngredientForm = $('#add-ingredient-form'),
+        ingredientItemTpl = $('#ingredient-item-template'),
+        ingredientQuantityInput = $('[ data-quantity]'),
+        ingredientQtyPriceInput = $('[ data-qty-price]'),
+        qtyPriceInput = $('[ data-qty-price]'),
+        noteInput = $('[ data-note]'),
+        priceList = $('#price-list'),
+        menuPriceInput = $('[data-price]'),
+        menuPriceRowTemplate = $('#menu-price-row-template');
+
+    $('[name=stock_item]', addIngredientForm).on('change', function(e) {
+        $('[data-qty-unit]', addIngredientForm).text(
+            $('option[value=' + $(this).val() + ']', $(this)).data('unit')
+        );
+    });
+
+    $('[data-create-menu-price]').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var a = $(this);
+
+        $.ajax({
+            url: a.attr('href'),
+            dataType: 'json',
+            method: 'post',
+            success: function(data) {
+                data['currency'] = '<?= $account->getDefaultCurrency() ?>';
+                var tpl = _.template(menuPriceRowTemplate.html()),
+                    tr = a.closest('tr');
+                tr.addClass('new');
+                tr.html(tpl(data));
+
+                markAsChanged($('[data-price]', tr));
+                saveOnEnter($('[data-price]', tr), '/menu-price/update-price');
+                deletableItem($('.btn-delete'));
+            },
+            error: function() {
+                alert('Tidak dapat menambah menu yang dipilih, cobalah beberapa saat lagi.')
+            }
+        });
+    });
+
+    // recalculate gross
+    ingredientQtyPriceInput.on('change keyup', function() {
+        var defaultPrice = <?= intval($menu->getDefaultPrice()) ?>,
+            totalUsage = 0;
+        ingredientQtyPriceInput.each(function(k, v) {
+            var input = $(v);
+            totalUsage += parseFloat(input.val());
+        });
+
+        if (totalUsage >= 0) {
+            $('[data-production-price]').text(accounting.formatMoney(totalUsage, '', 2));
+            $('[data-gross]').text(accounting.formatMoney(defaultPrice - totalUsage, '', 2));
+        }
+    });
+
+    markAsChanged(ingredientQuantityInput);
+    markAsChanged(ingredientQtyPriceInput);
+    markAsChanged(menuPriceInput);
+    markAsChanged(noteInput);
+
+    saveOnEnter(ingredientQuantityInput, '/ingredient/update-quantity');
+    saveOnEnter(ingredientQtyPriceInput, '/ingredient/update-qty-price');
+    saveOnEnter(menuPriceInput, '/menu-price/update-price');
+    saveOnEnter(noteInput, '/ingredient/update-note');
+
+    deletableItem($('.btn-delete'));
+
+    // Google visualization
+
+    google.load('visualization', '1.1', {
+        packages: ['corechart', 'bar', 'line'],
+        language: '<?= $account->getDefaultLocale() ?>'
+    });
+
+    GoogleOnLoadCallback(function() {
+
+        var numberFormatter = NumberFormatter({ format: '#,###', prefix: '<?= $account->getDefaultCurrency() ?> ' });
+        $.getJSON("/ingredient/ratio-chart-data?menu=<?= $menu->getId() ?>", function(data) {
+            var dt = ArrayToDataTable(data);
+            numberFormatter.format(dt, 1);
+            new PieChart().data(dt).draw('ingredient-ratio');
+        });
+
+    });
+
+</script>

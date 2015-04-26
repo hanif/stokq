@@ -1,0 +1,83 @@
+<?php
+
+use Stokq\Entity\Account;
+
+/** @var Account $account */
+$account = $this->account;
+
+?>
+
+<div class="container-fluid pt15 pb15">
+
+    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-line-chart fa-2x"></i> Statistik Penjualan</h2>
+
+    <hr/>
+
+    <div class="row">
+        <div class="content clearfix">
+
+            <div class="col-xs-12">
+                <div class="line-chart-container">
+                    <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Total Penjualan / Bulan</h2>
+                    <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                    <div id="total-sold-monthly" class="line-chart" style="min-height: 380px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="content clearfix">
+
+            <div class="col-xs-12">
+                <div class="line-chart-container">
+                    <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Item Dijual / Bulan</h2>
+                    <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                    <div id="quantity-sold-monthly" class="line-chart" style="min-height: 380px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="content clearfix">
+
+            <div class="col-xs-12">
+                <div class="line-chart-container">
+                    <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Total Penjualan / Outlet</h2>
+                    <span class="grey mb10 block">Dalam 6 bulan terakhir</span>
+                    <div id="sales-by-outlet" class="line-chart" style="min-height: 380px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="/js/chart.js"></script>
+<script type="text/javascript">
+
+    google.load('visualization', '1.1', {
+        packages: ['corechart', 'bar', 'line'],
+        language: '<?= $account->getDefaultLocale() ?>'
+    });
+
+    GoogleOnLoadCallback(function() {
+
+        var numberFormatter = NumberFormatter({ format: '#,###', prefix: '<?= $account->getDefaultCurrency() ?> ' }),
+            totalSalePerMonthDT = ArrayToDataTable(<?= json_encode($this->totalSalePerMonth) ?>),
+            qtySoldPerMonthDT = ArrayToDataTable(<?= json_encode($this->saleQuantityPerMonth) ?>),
+            totalSaleByOutletDT = ArrayToDataTable(<?= json_encode($this->totalSaleByOutlet) ?>);
+
+        numberFormatter.format(totalSalePerMonthDT, 1);
+
+        new LineChart().data(totalSalePerMonthDT).draw('total-sold-monthly');
+        new LineChart().data(qtySoldPerMonthDT).draw('quantity-sold-monthly');
+        new MaterialBarChart().data(totalSaleByOutletDT).draw('sales-by-outlet');
+    });
+
+</script>

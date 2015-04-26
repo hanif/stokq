@@ -1,0 +1,101 @@
+<div class="container-fluid pt15 pb15">
+
+    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-building-o fa-2x"></i> Setting Umum</h2>
+
+    <nav class="navbar alt navbar-default">
+        <div class="container">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#" onclick="return false;">Setting Umum</a></li>
+                <li><a href="/setting/change-password">Ganti Password</a></li>
+                <li><a href="/user">User &amp; Grup</a></li>
+                <li><a href="/index/help">Support &amp; Bantuan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="pl20 pr20">
+        <div class="row">
+            <div class="col-xs-12 col-sm-7">
+
+                <?= $this->message() ?>
+                <?= $this->flash() ?>
+
+                <form action="" method="post">
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('name'), 'basic') ?>
+                        </div>
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('billing_user'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('default_currency'), 'basic') ?>
+                        </div>
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('default_timezone'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('default_locale'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <br/>
+                    <h4 class="green">Contact Info</h4>
+                    <hr/>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('phone'), 'basic') ?>
+                        </div>
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('fax'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('email'), 'basic') ?>
+                        </div>
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('website'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <?= $this->form($this->accountForm->get('address'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <br/>
+                    <h4 class="green">Social Media</h4>
+                    <hr/>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('facebook'), 'basic') ?>
+                        </div>
+                        <div class="col-xs-6">
+                            <?= $this->form($this->accountForm->get('twitter'), 'basic') ?>
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn alt green"> <i class="fa fa-save"></i> Simpan </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,236 @@
+<?php
+
+use Stokq\DTO\PurchaseWithTotal;
+use Stokq\Entity\Account;
+use Stokq\Entity\User;
+use Stokq\Entity\Warehouse;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var User $user */
+$user = $this->user;
+
+/** @var Warehouse[] $warehouses */
+$warehouses = $this->warehouses;
+
+/** @var PurchaseWithTotal[] $pages */
+$pages = $this->pages;
+
+?>
+
+<script>
+
+    function deleteItem(target) {
+        var self = $(target);
+        if (confirm('Are you sure?')) {
+            $.ajax({
+                url: self.attr('href'),
+                method: 'delete',
+                success: function() {
+                    self.closest('tr').fadeOut();
+                },
+                error: function() {
+                    alert('Tidak dapat menghapus item yang dipilih, cobalah beberapa saat lagi.');
+                }
+            });
+        }
+        return false;
+    }
+
+</script>
+
+<div class="container-fluid pt15 pb15">
+
+    <button type="button" class="btn alt green mb20" data-toggle="modal" data-target="#select-warehouse-modal">
+        <i class="fa fa-plus"></i> Tambah Daftar Belanja
+    </button>
+
+    <div class="inline-block middle mt-20">
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/supplier">Manajemen Supplier</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/purchase/overview">Overview Belanja</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/cash-flow">Grafik Penjualan &amp; Belanja</a>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="row well green card alt-form ml0 mr0 pt5 pl0 pr0 pb10 mb0">
+                <form action="">
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Keyword</label>
+                            <input type="text" name="q" value="<?= $this->keyword ?>" class="form-control" placeholder="Keyword">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Gudang</label>
+                            <div class="block">
+                                <select name="warehouses[]" title="Gudang" multiple data-ui="select2" class="form-control">
+                                    <?php foreach ($warehouses as $warehouse) { ?>
+                                        <option value="<?= $warehouse->getId() ?>" <?php if (is_array($this->selectedWarehouses) &&
+                                            in_array($warehouse->getId(), $this->selectedWarehouses)) { ?> selected <?php } ?>>
+                                            <?= $warehouse->getName() ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Dari Tgl</label>
+                            <input type="text" name="from" value="<?= $this->from ?>" class="form-control" placeholder="From Date" data-ui="datepicker">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Sampai Tgl</label>
+                            <input type="text" name="to" value="<?= $this->to ?>" class="form-control" placeholder="To Date" data-ui="datepicker">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Status</label>
+                            <div class="block">
+                                <select name="status" title="Status" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="planned">Direncanakan</option>
+                                    <option value="in progress">Dalam Proses</option>
+                                    <option value="delivered">Diterima</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp;</label>
+                            <button type="submit" class="btn alt green uppercase form-control"> <i class="fa fa-search"></i> Cari </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="table-responsive pb50">
+                <table class="table purchase table-bordered table-hover dark-grey mt-1">
+                    <thead>
+                    <tr>
+                        <th rowspan="2">#ID / Gudang</th>
+                        <th rowspan="2" style="width: 190px;">Dibuat Oleh</th>
+                        <th rowspan="2" style="width: 120px;">Tanggal<br/>Order</th>
+                        <th rowspan="2" style="width: 120px;">Tanggal<br/>Diterima</th>
+                        <th colspan="3">Belanja</th>
+                        <th rowspan="2" style="width: 95px;">Status</th>
+                        <th rowspan="2" style="width: 60px;"></th>
+                    </tr>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty.</th>
+                        <th>Total</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <?php if (count($pages)) { ?>
+                        <?php foreach ($pages as $item) { ?>
+                            <tr>
+                                <td>
+                                    <strong class="block">
+                                        #<?= $item->getPurchaseId() ?>
+                                        <?php if ($item->getPurchaseTitle()) { ?>
+                                            : <?= $item->getPurchaseTitle() ?>
+                                        <?php } ?>
+                                    </strong>
+
+                                    <?php if ($item->getWarehouseName()) { ?>
+                                        <small class="grey block"><?= $item->getWarehouseName() ?></small>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?= $item->getCreatorName() ?>
+                                    <small class="grey block"><?= $item->getCreatedAt()->format('M d, Y H:i') ?></small>
+                                </td>
+                                <td>
+                                    <?= $item->getFormattedOrderedAt() ?: '&mdash;' ?>
+                                </td>
+                                <td>
+                                    <?= $item->getFormattedDeliveredAt() ?: '&mdash;' ?>
+                                </td>
+                                <td>
+                                    <?= $item->getNumItems() ?>
+                                </td>
+                                <td>
+                                    <?= $item->getNumQuantity() ?>
+                                </td>
+                                <td>
+                                    <strong class="light-grey block"><?= $account->getDefaultCurrency() ?></strong>
+                                    <span class="block text-right">
+                                        <?= number_format($item->getTotal(), 2) ?>
+                                    </span>
+                                </td>
+                                <td class="text-center purchase-status <?= $item->getStatus() ?>">
+                                    <span class="block"><?= $item->getStatus() ?></span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">action <span class="caret"></span></button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="/purchase/edit?id=<?= $item->getPurchaseId() ?>">Detail/Edit</a></li>
+                                            <li><a href="/purchase/print?id=<?= $item->getPurchaseId() ?>">Print Slip</a></li>
+                                            <li><a href="/purchase/download-excel?id=<?= $item->getPurchaseId() ?>">Download Excel</a></li>
+                                            <li><a href="/purchase/delete?id=<?= $item->getPurchaseId() ?>" onclick="return deleteItem(this);">Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="9">
+                                <p class="grey mt10 pl10"><i class="fa fa-warning"></i> Tidak ada data belanja.</p>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="pull-right">
+        <?= $this->pagination($pages) ?>
+    </div>
+
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" id="select-warehouse-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title uppercase smaller-text">Pilih Gudang</h4>
+            </div>
+            <form action="/purchase/new" method="get" class="form alt-form bigger-label">
+                <div class="modal-body bg-grey">
+                    <div class="control-group">
+                        <select class="form-control" name="id" title="Pilih Gudang">
+                            <?php foreach ($warehouses as $warehouse) { ?>
+                                <option value="<?= $warehouse->getId() ?>"><?= $warehouse->getName() ?></option>
+                            <?php } ?>
+                        </select>
+                        <p class="description small grey pl2 pt4">
+                            Belanjaan akan ditambahkan ke dalam gudang yang dipilih, level stok juga akan di update.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn alt green">Lanjutkan <i class="fa fa-mail-forward"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

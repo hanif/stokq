@@ -1,0 +1,444 @@
+<?php
+
+use Stokq\Entity\LevelChange;
+use Stokq\Entity\Warehouse;
+
+/** @var Warehouse $warehouse */
+/** @var LevelChange[] $changelog */
+
+$warehouse = $this->warehouse;
+$changelog = $this->changelog;
+
+?>
+
+<div class="container-fluid pt5 pb20 pl20 pr20 bg-grey">
+    <h2 class="dark-grey mb0 pb0">
+        <?= $warehouse->getName() ;?>
+    </h2>
+    <span class="grey"><?= ($warehouse->getAddress() ?: 'Tidak ada info alamat.') ?></span>
+</div>
+
+<div role="tabpanel">
+
+    <ul class="nav nav-tabs alt bg-grey" role="tablist">
+        <li role="presentation" class="active ml20">
+            <a href="#tab-stock-level" aria-controls="tab-stock-level" role="tab" data-toggle="tab">Level Stok</a>
+        </li>
+        <li role="presentation">
+            <a href="#tab-changelog" aria-controls="tab-changelog" role="tab" data-toggle="tab">Changelog</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="tab-stock-level">
+            <div class="container-fluid p20">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered tight stock-level" id="stock-level-table">
+                                <thead>
+                                <tr>
+                                    <th style="width: 50px;"></th>
+                                    <th style="width: auto; min-width: 200px;">Item</th>
+                                    <th style="width: 200px;">Level Stok</th>
+                                    <th style="width: 200px;">Level Reorder</th>
+                                    <th style="width: 150px;">Belanja Terakhir</th>
+                                    <th style="width: 150px;">Koreksi Terakhir</th>
+                                </tr>
+                                <tr>
+                                    <td colspan="7" class="bg-grey pl15">
+                                        <i class="fa fa-warning mr5"></i>
+                                        Untuk mengkoreksi level stok, ganti angka di dalam kotak lalu tekan enter untuk menyimpannya.
+                                    </td>
+                                </tr>
+                                </thead>
+                                <tbody id="stock-level-list">
+                                <?php foreach ($this->stockItems as $item) { ?>
+                                    <tr>
+                                        <td class="middle center">
+                                            <?php if (isset($item['stock_id'])) { ?>
+                                                <a href="/stock/delete?id=<?= $item['stock_id'] ?>" class="btn btn-delete btn-xs" data-delete>
+                                                    <i class="fa fa-times"></i>
+                                                </a>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?= $item['item_name'] ?>
+                                            <br/>
+                                            <small class="grey">
+                                                <?= $item['item_code'] ?>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <?php if (isset($item['stock_id'])) { ?>
+                                                <fieldset>
+                                                    <div class="input-group">
+                                                        <input class="form-control" type="number" name="current_level" data-id="<?= $item['stock_id'] ?>"
+                                                               min="1" step="0.0001" value="<?= $item['current_level'] ?>" placeholder="Current Level"
+                                                               data-value="<?= $item['current_level'] ?>" data-current-level/>
+                                                        <span class="input-group-addon"><?= $item['storage_unit_name'] ?></span>
+                                                    </div>
+                                                </fieldset>
+                                            <?php } else { ?>
+                                                <p class="block text-center m0 p0 pt5">
+                                                    <a data-create-stock class="grey" href="/stock/create?stockItem=<?= $item['item_id'] ?>&warehouse=<?= $warehouse->getId() ?>">
+                                                        <i class="fa fa-plus fa-2x"></i>
+                                                    </a>
+                                                </p>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?php if (isset($item['stock_id'])) { ?>
+                                                <fieldset>
+                                                    <div class="input-group">
+                                                        <input name="id" type="hidden" value="<?= $item['stock_id'] ?>"/>
+                                                        <input class="form-control" type="number" name="reorder_level" min="1" step="0.0001"
+                                                               value="<?= $item['reorder_level'] ?>" placeholder="Reorder Level"
+                                                               data-value="<?= $item['reorder_level'] ?>" data-reorder-level/>
+                                                        <span class="input-group-addon"><?= $item['storage_unit_name'] ?></span>
+                                                    </div>
+                                                </fieldset>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?php if (isset($item['stock_id']) && isset($item['last_purchase'])) { ?>
+                                                <?= $item['last_purchase'] ?>
+                                            <?php } ?>
+                                        </td>
+                                        <td>
+                                            <?php if (isset($item['stock_id']) && isset($item['last_change'])) { ?>
+                                                <?= $item['last_change'] ?>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-5">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="tab-changelog">
+
+            <div class="container-fluid p20">
+                <div class="row">
+                    <div class="col-sm-12">
+
+                        <h4 class="alt grey uppercase"><i class="fa fa-history"></i>&nbsp; Log 7 Hari Terakhir</h4>
+
+                        <hr/>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped changelog">
+                                <thead>
+                                    <tr>
+                                        <th>No. </th>
+                                        <th>Tanggal</th>
+                                        <th>Waktu</th>
+                                        <th>Item</th>
+                                        <th>Jenis</th>
+                                        <th>Delta</th>
+                                        <th>Korektor</th>
+                                        <th>Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($changelog as $i => $log) { ?>
+
+                                    <tr>
+                                        <td><?= $i + 1 ?></td>
+                                        <td><?= $log->getCreatedAt()->format('d M Y') ?></td>
+                                        <td><?= $log->getCreatedAt()->format('H:i') ?></td>
+                                        <td><?= $log->getStock()->getStockItem()->getName() ?></td>
+                                        <td><?= $log->getType() ?></td>
+                                        <td>
+                                            <?= number_format($log->getDeltaInStorageUnit(), 2) ?>
+                                            <?= $log->getStock()->getStockItem()->getStorageUnit()->getName() ?>
+                                        </td>
+                                        <td><?= $log->getCorrector()->getName() ?></td>
+                                        <td class="grey"><?= $log->getNote() ?></td>
+                                    </tr>
+
+                                <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" id="level-change-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title uppercase grey smaller-text">Koreksi Level</h4>
+            </div>
+            <div class="modal-body">
+                <div id="level-change-modal-yield">
+                    <form action="/stock/update-current-level" method="post" id="level-change-form">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <input name="id" type="hidden" value="" id="stock-id-input"/>
+
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-addon" style="width: 65%;">Level Sekarang</div>
+                                                <input type="text" value="" id="current-level-input" placeholder="Level Sekarang" class="form-control" disabled/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-addon" style="width: 65%;">Level Baru</div>
+                                                <input type="text" name="new_level" value="" id="new-level-input" placeholder="Level Baru" class="form-control" readonly aria-readonly/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr/>
+
+                                <label for="options-radios-correction">Jenis Perubahan</label>
+
+                                <div class="row">
+                                    <div class="col-xs-4">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-correction" value="correction" checked autofocus="on">
+                                                Koreksi
+                                            </label>
+                                        </div>
+
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-wasted" value="wasted">
+                                                Pembuangan
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-4">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-stock-in" value="stock in">
+                                                Stok Masuk
+                                            </label>
+                                        </div>
+
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-stock-out" value="stock out">
+                                                Stok Keluar
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-4">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-mutation" value="mutation">
+                                                Mutasi
+                                            </label>
+                                        </div>
+
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="type" id="options-radios-other" value="other">
+                                                Lainnya
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="control-label">Catatan</label>
+                                    <textarea name="note" rows="2" class="form-control" placeholder="Catatan"></textarea>
+                                </div>
+
+                                <div class="form-group mb0 block text-right">
+                                    <button type="submit" class="btn alt green"><i class="fa fa-save"></i> Simpan</button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include '_stock_row.tpl' ?>
+
+<script>
+
+    var stockLevelList = $('#stock-level-list'),
+        currentLevelInput = $('[data-current-level]', stockLevelList),
+        reorderLevelInput = $('[data-reorder-level]', stockLevelList),
+        levelChangeModal = $('#level-change-modal'),
+        levelChangeModalYield = $('#level-change-modal-yield'),
+        stockRowTemplate = $('#stock-row-template');
+
+    function formatRelativeDate(elem) {
+        $(elem).each(function(i, td) {
+            if ($(td).text().trim() != '') {
+                var relTime = moment($(td).text(), "YYYY-MM-DD hh:mm:ss").fromNow(),
+                    formattedTime = moment($(td).text(), "YYYY-MM-DD hh:mm:ss").format('D MMM YYYY, hh:mm');
+
+                $(td).html($('<strong class="dark-grey">' + relTime + '</strong><br /><small class="grey">' + formattedTime + '</small>'));
+            }
+        });
+    }
+
+    function deletableItem(elem) {
+        $(elem).on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var target = $(this);
+            $.ajax({
+                url: target.attr('href'),
+                dataType: 'json',
+                method: 'DELETE',
+                success: function(resp) {
+                    target.closest('tr').fadeOut('fast');
+                },
+                error: function() {
+                    alert('Tidak dapat menghapus item yang dipilih saat ini, coba lagi beberapa saat.')
+                }
+            });
+        });
+    }
+
+    function markAsChanged(elem) {
+        $(elem).on('keyup', function() {
+            if ($(this).data('value') != $(this).val()) {
+                $(this).addClass('changed')
+            } else {
+                $(this).removeClass('changed')
+            }
+        });
+    }
+
+    function saveOnEnter(elems, url) {
+        elems.each(function() {
+            var el = $(this);
+
+            el.keypress(function(e) {
+                if (e.keyCode == 13 && (el.val() != el.data('value'))) {
+                    $.ajax({
+                        url: url,
+                        data: el.closest('fieldset').serialize(),
+                        dataType: 'json',
+                        method: 'post',
+                        success: function(resp) {
+                            el.attr('value', el.val());
+                            el.attr('data-value', el.val());
+                            el.removeClass('changed');
+                        },
+                        error: function() {
+                            alert('Tidak dapat meng-update data item yang dipilih saat ini, coba lagi beberapa saat.')
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    function showChangeDetailDialogOnEnter(elems, url) {
+        elems.each(function() {
+            var el = $(this);
+
+            el.keypress(function(e) {
+                if (e.keyCode == 13 && (el.val() != el.data('value'))) {
+
+                    $('#stock-id-input', levelChangeModal).val(el.data('id'));
+                    $('#current-level-input', levelChangeModal).val(el.data('value'));
+                    $('#new-level-input', levelChangeModal).val(el.val());
+                    levelChangeModal.modal({ show:true });
+
+                    $('#level-change-form', levelChangeModal).on('submit', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        var form = $(this);
+
+                        $.ajax({
+                            url: form.attr('action'),
+                            data: form.serialize(),
+                            dataType: 'json',
+                            method: form.attr('method'),
+                            success: function(resp) {
+                                el.attr('value', el.val());
+                                el.attr('data-value', el.val());
+                                el.removeClass('changed');
+                                form.trigger('reset');
+                                levelChangeModal.modal('hide');
+                                el.select();
+                            },
+                            error: function() {
+                                alert('Tidak dapat meng-update data item yang dipilih saat ini, coba lagi beberapa saat.')
+                            }
+                        });
+                    });
+                }
+            });
+        });
+    }
+
+    $('[data-create-stock]').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var a = $(this);
+
+        $.ajax({
+            url: a.attr('href'),
+            dataType: 'json',
+            method: 'post',
+            success: function(data) {
+                var tpl = _.template(stockRowTemplate.html()),
+                    tr = a.closest('tr');
+                tr.addClass('new');
+                tr.html(tpl(data));
+
+                markAsChanged($('[data-current-level]', tr));
+                markAsChanged($('[data-reorder-level]', tr));
+                showChangeDetailDialogOnEnter($('[data-current-level]', tr), '/stock/update-current-level');
+                saveOnEnter($('[data-reorder-level]', tr), '/stock/update-reorder-level');
+                deletableItem($('.btn-delete'));
+            },
+            error: function() {
+                alert('Tidak dapat menambahkan item ke dalam gudang saat ini, coba lagi beberapa saat.')
+            }
+        });
+    });
+
+    markAsChanged(currentLevelInput);
+    markAsChanged(reorderLevelInput);
+    showChangeDetailDialogOnEnter(currentLevelInput, '/stock/update-current-level');
+    saveOnEnter(reorderLevelInput, '/stock/update-reorder-level');
+    deletableItem($('.btn-delete'));
+    formatRelativeDate('#stock-level-list tr td:nth-child(5)');
+    formatRelativeDate('#stock-level-list tr td:nth-child(6)');
+
+    $(document).ready(function() {
+        $('[data-current-level]').each(function(k, v) {
+            $(v).val(Number($(v).val()).toFixed(2));
+        });
+    });
+
+</script>

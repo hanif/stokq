@@ -1,0 +1,424 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\UnitType;
+use Stokq\Entity\User;
+use Stokq\Entity\Warehouse;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var User $user */
+$user = $this->user;
+
+/** @var Warehouse $warehouse */
+$warehouse = $this->warehouse;
+
+/** @var UnitType[] $unitTypes */
+$unitTypes = $this->unitTypes;
+
+/** @return string */
+$unitSelectHtml = function() use($unitTypes) {
+    $markup = '<select data-select-unit class="alt form-control" title="">';
+    $markup .= '<option value=""></option>';
+
+    foreach ($unitTypes as $unitType) {
+        $markup .= sprintf('<optgroup label="%s">', $unitType->getName());
+        foreach ($unitType->getStockUnits() as $unit) {
+            $markup .= sprintf('<option value="%s">%s</option>', $unit->getId(), $unit->getName());
+        }
+        $markup .= '</optgroup>';
+    }
+
+    $markup .= '</select>';
+    return $markup;
+};
+
+?>
+
+<script type="text/javascript" src="/vendor/jquery-mask/jquery.mask.min.js"></script>
+<script type="text/javascript" src="/vendor/accounting.js/accounting.min.js"></script>
+<script type="text/javascript" src='/vendor/typeahead.js/dist/typeahead.jquery.min.js'></script>
+<script type="text/javascript" src='/vendor/typeahead.js/dist/bloodhound.min.js'></script>
+<script>
+
+    var saveBtn,
+        startNum = 5,
+        purchaseItemRows,
+        createPurchaseForm,
+        items = <?= $this->jsonItems ?>,
+        stockItemTtEngine = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('item_name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            local: items
+        }),
+        supplierTtEngine = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: '/supplier/autocomplete?q=%QUERY'
+        });
+
+    stockItemTtEngine.initialize();
+    supplierTtEngine.initialize();
+
+    function computeTotal(ctx) {
+        var sum = 0;
+        $('[data-total]', ctx).each(function(k, v) {
+            var total = accounting.unformat($(v).val());
+            if (total) {
+                sum += parseFloat(total);
+            }
+        });
+
+        $('[data-summary-total]').val(accounting.formatNumber(sum, 0));
+    }
+
+    function triggerUnitPriceOrQtyChanged(ctx) {
+        $('[data-quantity], [data-unit-price]', ctx).on('keyup change', function() {
+            var target = $(this),
+                tr = target.closest('tr'),
+                price = tr.find('[data-unit-price]'),
+                qty = tr.find('[data-quantity]'),
+                subtotal = accounting.unformat(qty.val()) * accounting.unformat(price.val());
+
+            $('[data-subtotal]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+            $('[data-total]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+        });
+    }
+
+    function triggerInputTotalChanged(ctx) {
+        $('[data-total]', ctx).on('keyup change', function() {
+            computeTotal(ctx);
+        });
+    }
+
+    function addItemRow() {
+        var nextStartNum = startNum + 5;
+        for (var i = startNum; i < nextStartNum; i++) {
+            var tpl = _.template($('#item-row').html()),
+                row = $(tpl({num: i, selectUnitHtml: '<?= $unitSelectHtml() ?>'}));
+
+            makeAutocomplete($('[data-item-name]', row), stockItemTtEngine.ttAdapter(), 'item_name');
+            purchaseItemRows.append(row);
+        }
+
+        startNum = nextStartNum;
+        triggerInputTotalChanged(purchaseItemRows);
+        triggerUnitPriceOrQtyChanged(purchaseItemRows);
+        handleUnitSelected();
+
+        $('[data-total], [data-subtotal], [data-unit-price], [data-quantity]').mask("#,##0", {reverse: true});
+    }
+
+    function deleteItem(target) {
+        $(target).closest('tr').remove();
+        return false;
+    }
+
+    function autoCompleted(target, datum) {
+        var row = target.closest('tr'),
+            inputItemId = $('[data-item-id]', row),
+            inputItemName = $('[data-item-name]', row),
+            inputCode = $('[data-code]', row),
+            inputQty = $('[data-quantity]', row),
+            inputUnit = $('[data-unit]', row),
+            inputUnitId = $('[data-unit-id]', row),
+            selectUnit = $('[data-select-unit]', row),
+            inputAddToStock = $('[data-add-to-stock]', row);
+
+        inputItemId.val(datum['id']);
+        inputCode.val(datum['item_code']);
+        selectUnit.val(datum['unit_id']);
+        inputUnitId.val(datum['unit_id']);
+        inputUnit.val(datum['unit_name']);
+
+        inputUnit.attr('readonly', 'readonly');
+        selectUnit.attr('disabled', 'disabled');
+        inputItemName.attr('readonly', 'readonly');
+        inputItemName.css('background', '#eee');
+        inputAddToStock.remove();
+        inputQty.select();
+    }
+
+    function makeAutocomplete(selector, source, displayKey) {
+
+        selector.typeahead({
+                minLength: 1,
+                highlight: true
+            },
+            {
+                displayKey: displayKey,
+                source: source
+            }).bind('typeahead:selected', function(obj, datum) {
+                autoCompleted($(this), datum);
+            }).bind('typeahead:autocompleted', function(obj, datum) {
+                autoCompleted($(this), datum);
+            });
+    }
+
+    function handleUnitSelected() {
+
+        var selectUnit = $('[data-select-unit]');
+        selectUnit.on('change', function(e) {
+            var row = $(e.target).closest('tr');
+            $('[data-unit-id]', row).val($(e.target).val());
+            $('[data-unit]', row).val($('option:selected', $(e.target)).text());
+        });
+
+    }
+
+    $(document).ready(function() {
+        saveBtn = $('#save-btn');
+        purchaseItemRows = $('#purchase-item-rows');
+        createPurchaseForm = $('#create-purchase-form');
+
+        handleUnitSelected();
+        triggerInputTotalChanged(purchaseItemRows);
+        triggerUnitPriceOrQtyChanged(purchaseItemRows);
+        makeAutocomplete($('[data-item-name]'), stockItemTtEngine.ttAdapter(), 'item_name');
+
+        $('[name=supplier_name]').typeahead({
+            minLength: 2,
+            highlight: true
+        }, {
+            displayKey: 'name',
+            source: supplierTtEngine.ttAdapter()
+        });
+
+        $('select[name="status"]').on('change', function(e) {
+            var target = $(e.target),
+                orderedAt = $('[name="ordered_at"]').closest('div'),
+                deliveredAt = $('[name="delivered_at"]').closest('div'),
+                updateStockLevelCheckbox = $('[name="update_stock_level"]').closest('div');
+            switch (target.val()) {
+                case 'planned':
+                    orderedAt.hide();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+                case 'in progress':
+                    orderedAt.show();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+                case 'delivered':
+                    orderedAt.show();
+                    deliveredAt.show();
+                    updateStockLevelCheckbox.show();
+                    break;
+                default:
+                    orderedAt.hide();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+            }
+        });
+
+        ajaxForm(createPurchaseForm, {
+            ok: function(data, status) {
+                if (status == 'success') {
+                    alert('Data berhasil ditambahkan, klik OK untuk kembali ke daftar belanja.');
+                    window.location.href = '/purchase';
+                }
+            },
+            busy: function() {
+                saveBtn.attr('disabled', 'disabled');
+                $('span', saveBtn).text('Menyimpan data...');
+            },
+            done: function() {
+                saveBtn.removeAttr('disabled');
+                $('span', saveBtn).text('Simpan');
+            }
+        });
+
+        $('[data-total], [data-subtotal], [data-unit-price], [data-quantity]').mask("#,##0", {reverse: true});
+    });
+
+</script>
+
+<form action="/purchase/create" method="post" class="form alt-form" id="create-purchase-form">
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bb1s">
+        <h3 class="dark-grey mb0 pb0">
+            Tambah Daftar Belanja
+        </h3>
+        <small class="grey">Belanjaan akan ditambahkan ke gudang &lsquo;<?= $warehouse->getName() ?>&rsquo;.</small>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-light-yellow bb1s">
+        <div class="row form-alt">
+            <div class="col-xs-12 col-sm-10">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Judul</label>
+                            <input type="text" name="title" value="" class="form-control" placeholder="Judul">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Nomor PO</label>
+                            <input type="text" name="po_number" value="" class="form-control" placeholder="Nomor PO">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Gudang</label>
+                            <input type="text" value="<?= $warehouse->getName() ?>" class="form-control" placeholder="Warehouse" disabled>
+                            <input name="warehouse" type="hidden" value="<?= $warehouse->getId() ?>"/>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Dibuat Oleh</label>
+                            <input type="text" value="<?= $user->getName() ?>" class="form-control" placeholder="" disabled/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Dibeli Dari</label>
+                            <input type="text" name="supplier_name" value="" class="form-control" placeholder="Supplier">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Status</label>
+                            <select name="status" class="form-control" title="Status">
+                                <option value="planned">Direncanakan</option>
+                                <option value="in progress">Dalam Proses</option>
+                                <option value="delivered" selected>Diterima</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Tgl Order</label>
+                            <input type="text" name="ordered_at" value="<?= date('M d, Y') ?>" class="form-control" placeholder="Tgl Order" data-ui="datepicker" data-format="M dd, yy">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Tgl Diterima</label>
+                            <input type="text" name="delivered_at" value="<?= date('M d, Y') ?>" class="form-control" placeholder="Tgl Diterima" data-ui="datepicker" data-format="M dd, yy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid p20">
+        <div class="row">
+            <div class="col-sm-12">
+
+                <div class="table-responsive" style="overflow-y: hidden;">
+                    <h4 class="alt-heading-4 mb0">Item Belanja</h4>
+                    <small class="dark-grey block mb15 mt3"><i class="fa fa-lightbulb-o"></i> Centang pada kolom terakhir bertanda <i class="fa fa-plus-square"></i> untuk menambahkan ke dalam stok jila belum ada.</small>
+
+                    <div class="raw-items-errors">
+                        <div data-error-for="raw_items"></div>
+                    </div>
+
+                    <table class="table table-bordered p6 purchase-item">
+                        <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th style="width: 35%;">Item</th>
+                            <th style="width: 12%;">Kode</th>
+                            <th style="width: 7%;">Qty</th>
+                            <th style="width: 10%;">Unit</th>
+                            <th style="width: 12%;">Harga / Unit</th>
+                            <th style="width: 12%;">Subtotal</th>
+                            <th style="width: 12%;">Total</th>
+                            <th><div class="fa fa-plus-square"></div></th>
+                        </tr>
+                        </thead>
+                        <tbody id="purchase-item-rows">
+                        <?php for ($i = 0; $i < 5; $i++) { ?>
+                            <tr>
+                                <td>
+                                    <a class="btn btn-delete btn-xs" href="#" onclick="return deleteItem(this);"><i class="fa fa-times"></i></a>
+                                </td>
+                                <td>
+                                    <input data-item-id name="raw_items[<?= $i ?>][stock]" type="hidden" value=""/>
+                                    <input data-item-name name="raw_items[<?= $i ?>][item_name]" type="text" class="alt form-control" value="" placeholder="Nama Item"/>
+                                </td>
+                                <td>
+                                    <input data-code type="text" class="alt form-control" placeholder="#" value="" readonly>
+                                </td>
+                                <td>
+                                    <input data-quantity type="text" name="raw_items[<?= $i ?>][quantity]" class="alt form-control"
+                                           placeholder="Quantity" value="1">
+                                </td>
+                                <td>
+                                    <?= $unitSelectHtml() ?>
+                                    <input data-unit-id name="raw_items[<?= $i ?>][unit_id]" type="hidden" />
+                                    <input data-unit name="raw_items[<?= $i ?>][unit]" type="hidden" />
+                                </td>
+                                <td>
+                                    <input data-unit-price type="text" name="raw_items[<?= $i ?>][unit_price]"
+                                           class="alt form-control text-right" placeholder="Harga" value="0"/>
+                                </td>
+                                <td>
+                                    <input data-subtotal type="text" name="raw_items[<?= $i ?>][subtotal]"
+                                           class="alt form-control text-right" placeholder="Subtotal" value="0" readonly/>
+                                </td>
+                                <td>
+                                    <input data-total type="text" name="raw_items[<?= $i ?>][total]"
+                                           class="alt form-control text-right" placeholder="Total" value="0"/>
+                                </td>
+                                <td class="text-center">
+                                    <label>
+                                        <input data-add-to-stock type="checkbox" name="raw_items[<?= $i ?>][add_to_stock]" value="1"/>
+                                    </label>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="7" class="text-right grey uppercase middle"><strong>Total</strong></td>
+                            <td class="text-right">
+                                <input class="alt form-control text-right" type="text" disabled value="0" placeholder="" data-summary-total />
+                            </td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div>
+                    <button type="button" class="btn alt green" id="add-item-button" onclick="addItemRow();">
+                        <i class="fa fa-plus-square"></i> Tambah Item
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bt1s">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="control-label">Catatan</label>
+                    <textarea name="note" rows="4" class="form-control" placeholder="Catatan"></textarea>
+                </div>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="update_stock_level" checked>
+                        Update juga level stok di dalam gudang.
+                        <small class="block grey">Hanya jika status di set ke &ldquo;<strong>diterima</strong>&rdquo;.</small>
+                    </label>
+                </div>
+                <button type="submit" class="btn alt green mt20" id="save-btn"><i class="fa fa-save"></i> <span>Simpan</span></button>
+            </div>
+        </div>
+    </div>
+
+    <input name="currency" type="hidden" value="<?= $account->getDefaultCurrency() ?>"/>
+</form>
+
+<?php include '_item_row_creating.tpl' ?>

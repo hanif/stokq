@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>StokQ - Pilih Password</title>
+    <link rel="shortcut icon" type="image/png" href="/img/favicon.png">
+    <link rel='stylesheet' href='/vendor/bootstrap/css/bootstrap.min.css'>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col-sm-6 col-md-4 col-sm-push-3 col-md-push-4">
+
+            <h1 class="page-title">Pilih Password</h1>
+
+            <div class="alert alert-info">
+                <i class="fa fa-warning"></i> Silahkan pilih password untuk akun
+                &ldquo;<?= $this->user->getEmail() ?>&rdquo;, lalu klik lanjutkan.
+            </div>
+
+            <?= $this->message() ?>
+            <?= $this->flash() ?>
+
+            <form action="" method="post">
+                <?= $this->form($this->form, 'basic') ?>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success"> Lanjutkan &rarr; </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

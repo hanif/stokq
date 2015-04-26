@@ -1,0 +1,139 @@
+<div class="panel-group" role="tablist" aria-multiselectable="true" id="menu-accordion">
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#menu-accordion" href="#add-form-panel" aria-expanded="false" aria-controls="add-form-panel" class="collapsed">
+                    <i class="fa fa-plus-circle"></i> Tambah Menu Baru
+                </a>
+            </h4>
+        </div>
+        <div id="add-form-panel" class="panel-collapse collapse in" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+
+                <form action="/menu/create" method="post" role="form" id="add-menu-form">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Nama Menu</label>
+                                <input type="text" name="name" value="" class="form-control" placeholder="Nama Menu">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Varian</label>
+                                <select name="parent" class="form-control" title="Varian">
+                                    <option value=""></option>
+                                    <?php foreach ($this->parents as $parent) { ?>
+                                        <option value="<?= $parent['id'] ?>"><?= $parent['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Jenis</label>
+                                <select name="types[]" class="form-control" title="Tipe" multiple data-ui="select2">
+                                    <?php foreach ($this->types as $type) { ?>
+                                        <option value="<?= $type['id'] ?>"><?= $type['name'] ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Unit Saji</label>
+                                <input type="text" name="serving_unit" value="" class="form-control" placeholder="Unit Saji">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="control-label">Harga Default</label>
+                                <input type="text" name="default_price" value="" class="form-control" placeholder="Harga Default">
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="1" checked="checked">
+                                    Tambahkan menu ke semua outlet.
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="add_to_all" value="0">
+                                    Saya akan menambahkan secara manual.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <small class="block text-center">
+                                <a href="#" class="grey" data-toggle="#menu-more-options">opsi lainnya <i class="fa fa-caret-down"></i></a>
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="init-hidden" id="menu-more-options">
+
+                        <hr class="mt10 mb10"/>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label class="control-label">Deskripsi</label>
+                                    <textarea name="description" rows="3" class="form-control" placeholder="Deskripsi"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label class="control-label">Catatan</label>
+                                    <textarea name="note" rows="3" class="form-control" placeholder="Catatan"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mt10 mb10"/>
+
+                    <div class="form-group mb0 block text-right">
+                        <button type="submit" class="btn alt green"><i class="fa fa-save"></i> <span>Simpan</span></button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+            <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#menu-accordion" href="#type-panel" aria-expanded="false" aria-controls="help-panel">
+                    Jenis Menu
+                </a>
+            </h4>
+        </div>
+        <div id="type-panel" class="panel-collapse collapse" role="tabpanel" aria-expanded="false">
+            <div class="panel-body">
+                <form action="/type/create" method="post" class="form-vertical" role="form" id="add-type-form">
+                    <div class="form-group">
+                        <label class="control-label">Jenis</label>
+                        <input type="text" name="name" value="" class="form-control" placeholder="Jenis">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn alt green form-control"><i class="fa fa-save"></i> <span>Tambahkan</span></button>
+                    </div>
+                </form>
+
+                <table class="table table-bordered">
+                    <tbody id="type-list">
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,108 @@
+<?php
+
+use Stokq\Entity\Supplier;
+
+/** @var Supplier $supplier */
+$supplier = $this->supplier;
+
+?>
+
+<script>
+    var editSupplierForm,
+        saveBtn;
+
+    $(document).ready(function () {
+
+        saveBtn = $('#save-btn');
+        editSupplierForm = $('#edit-supplier-form');
+
+        ajaxForm(editSupplierForm, {
+            ok: function(data, status) {
+                if (status == 'success') {
+                    window.location.href = '/supplier/edit?id=<?= $supplier->getId() ?>';
+                }
+            },
+            busy: function() {
+                saveBtn.attr('disabled', 'disabled');
+                $('span', saveBtn).text('Menyimpan data...');
+            },
+            done: function() {
+                saveBtn.removeAttr('disabled');
+                $('span', saveBtn).text('Simpan');
+            }
+        });
+    });
+</script>
+
+<div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bb">
+    <h2 class="dark-grey mb0 pb0">
+        #<?= $supplier->getId() ?>: Edit Data Supplier
+    </h2>
+</div>
+
+<div class="container-fluid p20">
+    <form action="/supplier/update?id=<?= $supplier->getId() ?>" method="post" class="form alt-form" id="edit-supplier-form">
+        <div class="row">
+
+            <div class="col-sm-4">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label class="control-label">Nama</label>
+                            <input type="text" name="name" value="<?= $supplier->getName() ?>" class="form-control" placeholder="Nama">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">Kontak/Telp.</label>
+                            <input type="text" name="contact" value="<?= $supplier->getContact() ?>" class="form-control" placeholder="Telp.">
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">Email</label>
+                            <input type="email" name="email" value="<?= $supplier->getEmail() ?>" class="form-control" placeholder="Email">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">Website</label>
+                            <input type="text" name="website" value="<?= $supplier->getWebsite() ?>" class="form-control" placeholder="Website">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label class="control-label">Alamat</label>
+                            <textarea name="address" rows="4" class="form-control" placeholder="Alamat"><?= $supplier->getAddress() ?></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label class="control-label">Catatan</label>
+                            <textarea name="note" rows="4" class="form-control" placeholder="Catatan"><?= $supplier->getNote() ?></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt10">
+                    <div class="col-xs-12">
+                        <button type="submit" class="btn alt green" id="save-btn"><i class="fa fa-save"></i> <span>Simpan</span></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-sm-8">
+
+            </div>
+
+        </div>
+    </form>
+</div>

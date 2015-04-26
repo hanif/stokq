@@ -1,0 +1,302 @@
+<?php
+
+use Stokq\DTO\SupplierWithPurchase;
+use Stokq\Entity\Account;
+use Stokq\Entity\User;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var User $user */
+$user = $this->user;
+
+
+/** @var SupplierWithPurchase[] $pages */
+$pages = $this->pages;
+
+?>
+
+<script>
+
+    var saveBtn,
+        createSupplierForm;
+
+    function deleteItem(target) {
+        var self = $(target);
+        if (confirm('Are you sure?')) {
+            $.ajax({
+                url: self.attr('href'),
+                method: 'delete',
+                success: function() {
+                    self.closest('tr').fadeOut();
+                },
+                error: function() {
+                    alert('Could not delete selected item, please try again later.');
+                }
+            });
+        }
+        return false;
+    }
+
+    $(document).ready(function() {
+        saveBtn = $('#save-btn');
+        createSupplierForm = $('#create-supplier-form');
+
+        ajaxForm(createSupplierForm, {
+            ok: function(data, status) {
+                if (status == 'success') {
+                    var href = window.location.href;
+                    if (!href) {
+                        href = '/supplier';
+                    }
+                    window.location.href = href;
+                }
+            },
+            busy: function() {
+                saveBtn.attr('disabled', 'disabled');
+                $('span', saveBtn).text('Menyimpan data...');
+            },
+            done: function() {
+                saveBtn.removeAttr('disabled');
+                $('span', saveBtn).text('Tambahkan');
+            }
+        });
+
+    });
+
+</script>
+
+<div class="container-fluid pt15 pb15">
+
+    <button type="button" class="btn alt green mb20" data-toggle="modal" data-target="#add-supplier-modal">
+        <i class="fa fa-plus"></i> Tambah Supplier
+    </button>
+
+    <div class="inline-block middle mt-20">
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/purchase">Tabel Belanja</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/purchase/overview">Overview Belanja</a>
+        <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/cash-flow">Grafik Penjualan &amp; Belanja</a>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="row well green card alt-form ml0 mr0 pt5 pl0 pr0 pb10 mb0">
+                <form action="">
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Keyword</label>
+                            <input type="text" name="q" value="<?= $this->keyword ?>" class="form-control" placeholder="Keyword">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Min Belanja</label>
+                            <input type="number" name="min_purchase" value="<?= $this->minPurchase ?>" class="form-control" placeholder="Min Belanja" min="0">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Max Belanja</label>
+                            <input type="number" name="max_purchase" value="<?= $this->maxPurchase ?>" class="form-control" placeholder="Max Belanja" min="0">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Min Transaksi</label>
+                            <input type="number" name="min_transaction" value="<?= $this->minTransaction ?>" class="form-control" placeholder="Min Transaksi" min="0">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Max Transaksi</label>
+                            <input type="number" name="max_transaction" value="<?= $this->maxTransaction ?>" class="form-control" placeholder="Max Transaksi" min="0">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp;</label>
+                            <button type="submit" class="btn alt green uppercase form-control"> <i class="fa fa-search"></i> Cari </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12" id="main-pane">
+
+            <div class="table-responsive">
+                <table class="table supplier table-bordered table-hover dark-grey mt-1">
+                    <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 20%;">#ID / Nama</th>
+                        <th colspan="3" style="width: 45%;">Kontak</th>
+                        <th colspan="3" style="width: 35%;">Transaksi</th>
+                        <th rowspan="2" style="width: 60px;"></th>
+                    </tr>
+                    <tr>
+                        <th>Alamat</th>
+                        <th>Telp.</th>
+                        <th>Email</th>
+                        <th>Jml.</th>
+                        <th>Total</th>
+                        <th>Terakhir</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <?php if (count($pages)) { ?>
+                        <?php foreach ($pages as $item) { ?>
+                            <tr>
+                                <td>
+                                    <strong class="block">
+                                        #<?= $item->getId() ?>
+                                        <?php if ($item->getName()) { ?>
+                                            : <?= $item->getName() ?>
+                                        <?php } ?>
+                                    </strong>
+                                    <?php if ($item->getWebsite()) { ?>
+                                        <small class="block mt5 grey">
+                                            <i class="fa fa-globe"></i> <?= $item->getWebsite() ?>
+                                        </small>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <small>
+                                        <?= $item->getAddress() ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <small>
+                                        <?= $item->getContact() ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <small>
+                                        <?= $item->getEmail() ?>
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="green"><?= $item->getPurchaseCount() ?></span>
+                                </td>
+                                <td>
+                                    <strong class="light-grey block"><?= $account->getDefaultCurrency() ?></strong>
+                                    <span class="green block text-right">
+                                        <?= number_format($item->getTotalTransaction(), 2) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?= $item->getFormattedLastOrder() ?>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">action <span class="caret"></span></button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="/supplier/edit?id=<?= $item->getId() ?>">Detail/Edit</a></li>
+                                            <li><a href="/supplier/delete?id=<?= $item->getId() ?>" onclick="return deleteItem(this);">Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="8">
+                                <p class="grey mt10 pl10"><i class="fa fa-warning"></i> Tidak ada data supplier.</p>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pull-right">
+                <?= $this->pagination($pages) ?>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" id="add-supplier-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title uppercase smaller-text">Tambah Supplier</h4>
+            </div>
+            <form action="/supplier/create" method="post" class="form alt-form" id="create-supplier-form">
+
+                <div class="modal-body bg-grey">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label">Nama</label>
+                                <div class="control-group">
+                                    <input type="text" name="name" placeholder="Supplier" class="form-control"/>
+                                </div>
+                                <p class="description grey smaller-text pl2 pt2">
+                                    Nama vendor, tempat, supplier, distributor, atau perorangan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label class="control-label">Telp.</label>
+                                <div class="control-group">
+                                    <input type="text" name="contact" placeholder="Telp." class="form-control"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label class="control-label">Email</label>
+                                <div class="control-group">
+                                    <input type="email" name="email" placeholder="Email" class="form-control"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label class="control-label">Website</label>
+                                <div class="control-group">
+                                    <input type="text" name="website" placeholder="Website" class="form-control"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label">Alamat</label>
+                                <div class="control-group">
+                                    <textarea name="address" placeholder="Alamat" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label">Catatan</label>
+                                <div class="control-group">
+                                    <textarea name="note" placeholder="Catatan" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn alt green" id="save-btn"><i class="fa fa-save"></i> Tambahkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

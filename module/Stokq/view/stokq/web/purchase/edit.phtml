@@ -1,0 +1,451 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Log;
+use Stokq\Entity\Purchase;
+use Stokq\Entity\User;
+use Stokq\Entity\WarehousePurchase;
+use Stokq\Message\Log\PurchaseLog;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var Purchase $purchase */
+$purchase = $this->purchase;
+
+/** @var Log[] $logs */
+$logs = $this->logs;
+
+?>
+
+<script type="text/javascript" src="/vendor/jquery-mask/jquery.mask.min.js"></script>
+<script type="text/javascript" src="/vendor/accounting.js/accounting.min.js"></script>
+<script type="text/javascript" src='/vendor/typeahead.js/dist/typeahead.jquery.min.js'></script>
+<script type="text/javascript" src='/vendor/typeahead.js/dist/bloodhound.min.js'></script>
+<script>
+
+    var saveBtn,
+        startNum = <?= count($purchase->getItems()) ?>,
+        purchaseItemRows,
+        createPurchaseForm,
+        items = <?= $this->jsonItems ?>,
+        stockItemTtEngine = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('item_name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            local: items
+        }),
+        supplierTtEngine = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            remote: '/supplier/autocomplete?q=%QUERY'
+        });
+
+    stockItemTtEngine.initialize();
+    supplierTtEngine.initialize();
+
+    function computeTotal(ctx) {
+        var sum = 0;
+        $('[data-total]', ctx).each(function(k, v) {
+            var total = accounting.unformat($(v).val());
+            if (total) {
+                sum += parseFloat(total);
+            }
+        });
+
+        $('[data-summary-total]').val(accounting.formatNumber(sum, 0));
+    }
+
+    function triggerUnitPriceOrQtyChanged(ctx) {
+        $('[data-quantity], [data-unit-price]', ctx).on('keyup change', function() {
+            var target = $(this),
+                tr = target.closest('tr'),
+                price = tr.find('[data-unit-price]'),
+                qty = tr.find('[data-quantity]'),
+                subtotal = accounting.unformat(qty.val()) * accounting.unformat(price.val());
+
+            $('[data-subtotal]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+            $('[data-total]', tr).val(accounting.formatNumber(subtotal, 0)).trigger('change');
+        });
+    }
+
+    function triggerInputTotalChanged(ctx) {
+        $('[data-total]', ctx).on('keyup change', function() {
+            computeTotal(ctx);
+        });
+    }
+
+    function addItemRow() {
+        var nextStartNum = startNum + 5;
+        for (var i = startNum; i < nextStartNum; i++) {
+            var tpl = _.template($('#item-row').html()),
+                row = $(tpl({num: i}));
+
+            makeAutocomplete($('[data-item-name]', row), stockItemTtEngine.ttAdapter(), 'item_name');
+            purchaseItemRows.append(row);
+        }
+
+        startNum = nextStartNum;
+        triggerInputTotalChanged(purchaseItemRows);
+        triggerUnitPriceOrQtyChanged(purchaseItemRows);
+
+        $('[data-total], [data-subtotal], [data-unit-price], [data-quantity]').mask("#,##0", {reverse: true});
+    }
+
+    function deleteItem(target) {
+        $(target).closest('tr').remove();
+        return false;
+    }
+
+    function autoCompleted(target, datum) {
+        var row = target.closest('tr'),
+            inputItemId = $('[data-item-id]', row),
+            inputItemName = $('[data-item-name]', row),
+            inputCode = $('[data-code]', row),
+            inputQty = $('[data-quantity]', row),
+            inputUnit = $('[data-unit]', row);
+
+        inputItemId.val(datum['id']);
+        inputCode.val(datum['item_code']);
+        inputUnit.val(datum['unit_name']);
+
+        inputUnit.attr('readonly', 'readonly');
+        inputItemName.attr('readonly', 'readonly');
+        inputItemName.css('background', '#eee');
+        inputQty.select();
+    }
+
+    function makeAutocomplete(selector, source, displayKey) {
+        selector.typeahead({
+                minLength: 1,
+                highlight: true
+            },
+            {
+                displayKey: displayKey,
+                source: source
+            }).bind('typeahead:selected', function(obj, datum) {
+                autoCompleted($(this), datum);
+            }).bind('typeahead:autocompleted', function(obj, datum) {
+                autoCompleted($(this), datum);
+            });
+    }
+
+    $(document).ready(function() {
+        saveBtn = $('#save-btn');
+        purchaseItemRows = $('#purchase-item-rows');
+        createPurchaseForm = $('#create-purchase-form');
+
+        triggerInputTotalChanged(purchaseItemRows);
+        triggerUnitPriceOrQtyChanged(purchaseItemRows);
+
+        makeAutocomplete($('[data-item-name]'), stockItemTtEngine.ttAdapter(), 'item_name');
+
+        $('[name=supplier_name]').typeahead({
+            minLength: 2,
+            highlight: true
+        }, {
+            displayKey: 'name',
+            source: supplierTtEngine.ttAdapter()
+        });
+
+        $('select[name="status"]').on('change', function(e) {
+            var target = $(e.target),
+                orderedAt = $('[name="ordered_at"]').closest('div'),
+                deliveredAt = $('[name="delivered_at"]').closest('div'),
+                updateStockLevelCheckbox = $('[name="update_stock_level"]').closest('div');
+            switch (target.val()) {
+                case 'planned':
+                    orderedAt.hide();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+                case 'in progress':
+                    orderedAt.show();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+                case 'delivered':
+                    orderedAt.show();
+                    deliveredAt.show();
+                    updateStockLevelCheckbox.show();
+                    break;
+                default:
+                    orderedAt.hide();
+                    deliveredAt.hide();
+                    updateStockLevelCheckbox.hide();
+                    break;
+            }
+        });
+
+        $('[name=status]').trigger('change');
+
+        ajaxForm(createPurchaseForm, {
+            ok: function(data, status) {
+                if (status == 'success') {
+                    window.location.href = '/purchase/edit?id=' + <?= $purchase->getId() ?>;
+                }
+            },
+            busy: function() {
+                saveBtn.attr('disabled', 'disabled');
+                $('span', saveBtn).text('Menyimpan data...');
+            },
+            done: function() {
+                saveBtn.removeAttr('disabled');
+                $('span', saveBtn).text('Simpan');
+            }
+        });
+
+        $('[data-total], [data-subtotal], [data-unit-price], [data-quantity]').mask("#,##0", {reverse: true});
+    });
+
+</script>
+
+<form action="/purchase/update?id=<?= $purchase->getId() ?>" method="post" class="form alt-form" id="create-purchase-form">
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bb1s">
+        <h3 class="dark-grey mb0 pb0">
+            Edit Data Belanja #<?= $purchase->getId() ?>
+        </h3>
+        <?php if ($purchase->getCreator() instanceof User) { ?>
+            <small class="grey">Ditambahkan oleh &lsquo;<?= $purchase->getCreator()->getName() ?>&rsquo; pada <?= $purchase->getCreatedAt()->format('d M Y') ?>.</small>
+        <?php } ?>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-light-yellow bb1s">
+        <div class="row form-alt">
+            <div class="col-xs-12 col-sm-10">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Judul</label>
+                            <input type="text" name="title" value="<?= $purchase->getTitle() ?>" class="form-control" placeholder="Judul">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Nomor PO</label>
+                            <input type="text" name="po_number" value="<?= $purchase->getPoNumber() ?>" class="form-control" placeholder="Nomor PO">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Gudang</label>
+                            <?php if ($purchase->getWarehousePurchase() instanceof WarehousePurchase) { ?>
+                                <input name="warehouse" type="hidden" value="<?=  $purchase->getWarehousePurchase()->getWarehouse()->getId() ?>"/>
+                                <input type="text" value="<?= $purchase->getWarehousePurchase()->getWarehouse()->getName() ?>"
+                                       class="form-control" placeholder="Gudang" disabled>
+                            <?php } else { ?>
+                                <input name="warehouse" type="hidden" value=""/>
+                                <input type="text" placeholder="" value="-" disabled/>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Dibuat Oleh</label>
+                            <input type="text" value="<?= $purchase->getCreator() ? $purchase->getCreator()->getName() : '' ?>" class="form-control" placeholder="" disabled/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Dibeli Dari</label>
+                            <input type="text" name="supplier_name" value="<?= $purchase->getSupplier() ? $purchase->getSupplier()->getName() : '' ?>"
+                                   class="form-control" placeholder="Supplier">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Status</label>
+                            <select name="status" class="form-control" title="Status">
+                                <?php if ($purchase->getStatus() == Purchase::STATUS_DELIVERED) { ?>
+                                    <option value="delivered" selected>Diterima</option>
+                                <?php } else if ($purchase->getStatus() == Purchase::STATUS_IN_PROGRESS) { ?>
+                                    <option value="in progress" selected>Dalam Proses</option>
+                                    <option value="delivered">Diterima</option>
+                                <?php } else if ($purchase->getStatus() == Purchase::STATUS_PLANNED) { ?>
+                                    <option value="planned" selected>Direncanakan</option>
+                                    <option value="in progress">Dalam Proses</option>
+                                    <option value="delivered">Diterima</option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Tgl Order</label>
+                            <input type="text" name="ordered_at"
+                                   value="<?= $purchase->getOrderedAt() ? $purchase->getOrderedAt()->format('M d, Y') : '' ?>"
+                                   class="form-control" placeholder="Tgl Order" data-ui="datepicker" data-format="M dd, yy">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Tgl Diterima</label>
+                            <input type="text" name="delivered_at"
+                                   value="<?= $purchase->getDeliveredAt() ? $purchase->getDeliveredAt()->format('M d, Y') : '' ?>"
+                                   class="form-control" placeholder="Tgl Diterima" data-ui="datepicker" data-format="M dd, yy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid p20">
+        <div class="row">
+
+            <div class="col-md-12">
+
+                <div class="table-responsive" style="overflow-y: hidden;">
+                    <h4 class="alt-heading-4">Item Belanja</h4>
+
+                    <div class="raw-items-errors">
+                        <div data-error-for="raw_items"></div>
+                    </div>
+
+                    <table class="table table-bordered p6 purchase-item">
+                        <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th style="width: 35%;">Item</th>
+                            <th style="width: 12%;">Kode</th>
+                            <th style="width: 7%;">Qty</th>
+                            <th style="width: 10%;">Unit</th>
+                            <th style="width: 12%;">Harga / Unit</th>
+                            <th style="width: 12%;">Subtotal</th>
+                            <th style="width: 12%;">Total</th>
+                        </tr>
+                        </thead>
+                        <tbody id="purchase-item-rows">
+                        <?php
+
+                        $total = 0;
+
+                        ?>
+                        <?php foreach ($purchase->getItems() as $key => $item) { ?>
+                            <tr>
+                                <td>
+                                    <a class="btn btn-delete btn-xs" href="#" onclick="return deleteItem(this);"><i class="fa fa-times"></i></a>
+                                </td>
+                                <td>
+                                    <?php if ($item->getStockPurchase()) { ?>
+                                        <input name="raw_items[<?= $key ?>][stock]" type="hidden"
+                                               value="<?= $item->getStockPurchase()->getStock()->getId() ?>">
+                                        <input data-item-name name="raw_items[<?= $key ?>][item_name]" type="text"
+                                               class="alt form-control" value="<?= $item->getItemName() ?>" placeholder="Item" readonly/>
+                                    <?php } else { ?>
+                                        <input data-item-name name="raw_items[<?= $key ?>][item_name]" type="text"
+                                               class="alt form-control" value="<?= $item->getItemName() ?>" placeholder="Item"/>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if ($item->getStockPurchase()) { ?>
+                                        <input data-code type="text" class="alt form-control" placeholder="#"
+                                               value="<?= $item->getStockPurchase()->getStock()->getStockItem()->getCode() ?>" readonly>
+                                    <?php } else { ?>
+                                        <input data-code type="text" class="alt form-control" placeholder="#" value="" readonly>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <input data-quantity type="text" name="raw_items[<?= $key ?>][quantity]" class="alt form-control"
+                                           placeholder="Quantity" value="<?= $item->getQuantity() ?>">
+                                </td>
+                                <td>
+                                    <?php if ($item->getStockPurchase()) { ?>
+                                        <input data-unit name="raw_items[<?= $key ?>][unit]" class="alt form-control" type="text"
+                                               placeholder="Unit" value="<?= $item->getUnit() ?>" readonly/>
+                                    <?php } else { ?>
+                                        <input data-unit name="raw_items[<?= $key ?>][unit]" class="alt form-control" type="text"
+                                               placeholder="Unit" value="<?= $item->getUnit() ?>"/>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <input data-unit-price type="text" name="raw_items[<?= $key ?>][unit_price]"
+                                           class="alt form-control text-right" placeholder="Harga" value="<?= (int)$item->getUnitPrice() ?>"/>
+                                </td>
+                                <td>
+                                    <input data-subtotal type="text" name="raw_items[<?= $key ?>][subtotal]"
+                                           class="alt form-control text-right" placeholder="Subtotal" value="<?= (int)$item->getSubtotal() ?>" readonly/>
+                                </td>
+                                <td>
+                                    <input data-total type="text" name="raw_items[<?= $key ?>][total]"
+                                           class="alt form-control text-right" placeholder="Total" value="<?= (int)$item->getTotal() ?>"/>
+                                </td>
+                            </tr>
+                            <?php
+
+                            $total += (float)$item->getTotal();
+
+                            ?>
+                        <?php } ?>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="7" class="text-right grey uppercase middle"><strong>Total</strong></td>
+                            <td class="text-right">
+                                <input class="alt form-control text-right" type="text" disabled value="<?= number_format($total, 0) ?>" placeholder="" data-summary-total />
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div>
+                    <button type="button" class="btn alt green" id="add-item-button" onclick="addItemRow();">
+                        <i class="fa fa-plus-square"></i> Tambah Item
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container-fluid pt5 pb20 pl20 pr20 bg-grey bt1s">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="control-label">Catatan</label>
+                    <textarea name="note" rows="4" class="form-control" placeholder="Catatan"><?= $purchase->getNote() ?></textarea>
+                </div>
+
+                <?php if ($purchase->getStatus() == Purchase::STATUS_DELIVERED) { ?>
+                    <div class="alert alert-warning mt20">
+                        <i class="fa fa-lock"></i>
+                        Perubahan quantity pada item tidak ber-efek pada level stok dalam gudang
+                        untuk perubahan yang ke 2 atau lebih setelah statusnya sudah <strong><em>diterima</em></strong>.
+                    </div>
+                <?php } else { ?>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="update_stock_level" checked>
+                            Update juga level stok di dalam gudang.
+                            <small class="block grey">Hanya jika status di set ke &ldquo;<strong>diterima</strong>&rdquo;.</small>
+                        </label>
+                    </div>
+                <?php } ?>
+
+                <button type="submit" class="btn alt green mt20" id="save-btn"><i class="fa fa-save"></i> <span>Simpan</span></button>
+            </div>
+            <div class="col-sm-6">
+                <h4 class="alt-heading-4">
+                    Log Aktivitas
+                </h4>
+
+                <ul class="logs">
+                    <?php foreach ($logs as $log) { ?>
+                        <li>
+                            <strong class="green"><?= $log->getCreatedAt()->format('M d, Y - H:i') ?></strong>
+                            <span class="grey"> &mdash; <?= new PurchaseLog($log) ?></span>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <input name="currency" type="hidden" value="<?= $account->getDefaultCurrency() ?>"/>
+</form>
+
+<?php include '_item_row_editing.tpl' ?>

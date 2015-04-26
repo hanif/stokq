@@ -1,0 +1,28 @@
+{
+    "name": "stokq",
+    "description": "stock tracking application",
+    "keywords": [],
+    "homepage": "http://stokq.com",
+    "require": {
+        "php": ">=5.6",
+        "zendframework/zendframework": "2.4.0",
+        "zendframework/zftool": "0.1.0",
+        "zendframework/zend-developer-tools": "dev-master",
+        "cloud-solutions/zend-sentry": "1.5.1",
+        "doctrine/common": "2.5.0",
+        "doctrine/dbal": "2.5.0",
+        "doctrine/orm": "2.5.0",
+        "doctrine/doctrine-orm-module": "0.*",
+        "gedmo/doctrine-extensions": "2.4.0",
+        "doctrine/data-fixtures": "1.1.1",
+        "doctrine/migrations": "1.0.x-dev",
+        "oro/doctrine-extensions": "1.0.7",
+        "monolog/monolog": "1.13.1",
+        "imagine/Imagine": "0.6.2",
+        "phpunit/phpunit": "4.5.*",
+        "slm/mail": "~1.5",
+        "phpoffice/phpword": "dev-master",
+        "phpoffice/phpexcel": "dev-master",
+        "dompdf/dompdf": "dev-master"
+    }
+}

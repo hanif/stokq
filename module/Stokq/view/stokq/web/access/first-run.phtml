@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>StokQ - Setup</title>
+    <link rel="shortcut icon" type="image/png" href="/img/favicon.png">
+    <link rel='stylesheet' href='/vendor/bootstrap/css/bootstrap.min.css'>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col-sm-12 col-md-8 col-md-push-2">
+
+            <h1 class="page-title">Setup</h1>
+
+            <?= $this->message() ?>
+            <?= $this->flash() ?>
+
+            <form action="" method="post">
+
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('name'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('website'), 'basic') ?>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('email'), 'basic') ?>
+                        <?= $this->form($this->firstRunForm->get('phone'), 'basic') ?>
+                        <?= $this->form($this->firstRunForm->get('fax'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('address'), 'basic') ?>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <div class="row">
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('default_locale'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('default_timezone'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('default_currency'), 'basic') ?>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('facebook'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('twitter'), 'basic') ?>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <div class="row">
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('max_users'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('max_warehouses'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('max_outlets'), 'basic') ?>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('max_menus'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('max_stock_items'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-4">
+                        <?= $this->form($this->firstRunForm->get('next_due_date'), 'basic') ?>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('user_name'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('user_email'), 'basic') ?>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('password'), 'basic') ?>
+                    </div>
+                    <div class="col-xs-6">
+                        <?= $this->form($this->firstRunForm->get('confirm_password'), 'basic') ?>
+                    </div>
+                </div>
+
+                <hr/>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success"> Setup </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

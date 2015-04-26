@@ -1,0 +1,61 @@
+<div class="container-fluid pt15 pb15">
+
+    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-user-md fa-2x"></i> User &amp; Grup</h2>
+
+    <nav class="navbar alt navbar-default">
+        <div class="container">
+            <ul class="nav navbar-nav">
+                <li><a href="/setting/general">Setting Umum</a></li>
+                <li><a href="/setting/change-password">Ganti Password</a></li>
+                <li class="active"><a href="#" onclick="return false;">User &amp; Grup</a></li>
+                <li><a href="/index/help">Support &amp; Bantuan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-4" id="sidebar-pane">
+            <?= $this->partial('stokq/web/user/_index_sidebar') ?>
+        </div>
+
+        <div class="col-md-8" id="main-pane">
+
+            <div class="inline-block middle ml-15 mb20">
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15 toggle-sidebar" href="#">&larr; Toggle Sidebar</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered user">
+                    <thead>
+                    <tr>
+                        <th style="width: 65px !important;"></th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Kontak/Telp.</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <tr class="blank-state">
+                        <td colspan="5">
+                            <br/>
+                            <p class="text-center grey">
+                                <i class="fa fa-spinner"></i> Loading data, tunggu sebentar...
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<?php include '_edit_user_row.tpl' ?>
+<?php include '_user_row.tpl' ?>
+
+<script>
+    <?php include '_index.js' ?>
+</script>

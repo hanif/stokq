@@ -1,0 +1,177 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Service\Report\StatsReport;
+use Stokq\Stdlib\FormUtil;
+
+/** @var Account $account */
+/** @var StatsReport $stats */
+
+$account = $this->account;
+$stats = $this->stats;
+
+?>
+<div class="container-fluid pt15 pb15">
+
+    <div class="row">
+
+        <div class="col-md-8">
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-dashboard fa-2x"></i> Overview</h2>
+
+                    <hr/>
+
+                    <div class="col-md-4 col-sm-12">
+                        <div class="stats panel panel-default green">
+                            <div class="panel-body">
+                        <span class="description">
+                            Item Dijual
+                            <small class="block">30 hari terakhir</small>
+                        </span>
+                                <strong class="small value"><?= $stats->getMenuSoldLast(30) ?> items</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 col-sm-12">
+                        <div class="stats panel panel-default green">
+                            <div class="panel-body">
+                        <span class="description">
+                            Penjualan
+                            <small class="block">30 hari terakhir</small>
+                        </span>
+                                <strong class="small value"><?= $account->getDefaultCurrency() ?> <?= $stats->getIncomeLast(30) ?></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 col-sm-12">
+                        <div class="stats panel panel-default green">
+                            <div class="panel-body">
+                        <span class="description">
+                            Belanja
+                            <small class="block">30 hari terakhir</small>
+                        </span>
+                                <strong class="small value"><?= $account->getDefaultCurrency() ?> <?= $stats->getOutcomeLast(30) ?></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-pie-chart fa-2x"></i> Stats</h2>
+
+                    <hr/>
+
+                    <div class="thumbnail bg-grey">
+                        <h5 class="grey pl3">Penggunaan</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered text-center bg-white mb1">
+                                <tbody>
+                                <tr>
+                                    <td>Gudang</td>
+                                    <td>Outlet</td>
+                                    <td>Menu</td>
+                                    <td>Bahan</td>
+                                    <td>User</td>
+                                </tr>
+                                <tr>
+                                    <td><strong class="bigger dark-grey"><?= $stats->countTotalWarehouse() ?></strong></td>
+                                    <td><strong class="bigger dark-grey"><?= $stats->countTotalOutlet() ?></strong></td>
+                                    <td><strong class="bigger dark-grey"><?= $stats->countTotalMenu() ?></strong></td>
+                                    <td><strong class="bigger dark-grey"><?= $stats->countTotalStockItem() ?></strong></td>
+                                    <td><strong class="bigger dark-grey"><?= $stats->countTotalUser() ?></strong></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="thumbnail bg-grey">
+                        <h5 class="grey pl3">Cash Flow</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered text-center bg-white mb1">
+                                <tbody>
+                                <tr>
+                                    <td>Total Income</td>
+                                    <td>Total Outcome</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong class="bigger dark-grey">
+                                            <?= $account->getDefaultCurrency() ?> <?= number_format($stats->getIncome(), 2) ?>
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong class="bigger dark-grey">
+                                            <?= $account->getDefaultCurrency() ?> <?= number_format($stats->getOutcome(), 2) ?>
+                                        </strong>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt10">
+                        <i class="fa fa-lightbulb-o fa-2x"></i> Statistik lebih detail? <a href="/report">ke halaman report &rightarrow;</a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <h2 class="light-grey mt10 mb0 narrow-spaced uppercase normal"><i class="fa fa-building-o fa-2x"></i> Akun</h2>
+
+            <hr/>
+
+            <dl class="dark-grey bl4s pl10">
+                <dt>Organisasi</dt>
+                <dd><?= $account->getName() ?></dd>
+                <dd><?= $account->getWebsite() ?></dd>
+            </dl>
+
+            <dl class="dark-grey bl4s pl10">
+                <dt>Alamat</dt>
+                <dd><?= $account->getAddress() ?></dd>
+            </dl>
+
+            <dl class="dark-grey bl4s pl10">
+                <dt>Owner</dt>
+                <?php if ($account->getOwner()) { ?>
+                    <dd><?= $account->getOwner()->getName() ?> &lt;<?= $account->getOwner()->getEmail() ?>&gt;</dd>
+                    <dd><?= $account->getOwner()->getContactNo() ?></dd>
+                <?php } else { ?>
+                    <dd>(owner belum di set)</dd>
+                <?php } ?>
+            </dl>
+
+            <dl class="dark-grey bl4s pl10">
+                <dt>Billing</dt>
+                <?php if ($account->getBillingUser()) { ?>
+                    <dd><?= $account->getBillingUser()->getName() ?> &lt;<?= $account->getBillingUser()->getEmail() ?>&gt;</dd>
+                    <dd><?= $account->getBillingUser()->getContactNo() ?></dd>
+                <?php } else { ?>
+                    <dd>(billing user belum di set)</dd>
+                <?php } ?>
+            </dl>
+
+            <dl class="dark-grey bl4s pl10">
+                <dt>Setting Lokal</dt>
+                <dd><?= @FormUtil::getCountryOptions()[$account->getDefaultLocale()] ?></dd>
+                <dd><?= @FormUtil::getCurrencyOptions()[$account->getDefaultCurrency()] ?></dd>
+                <dd><?= @FormUtil::getTimezoneOptions()[$account->getDefaultTimezone()] ?></dd>
+            </dl>
+
+        </div>
+
+    </div>
+
+</div>

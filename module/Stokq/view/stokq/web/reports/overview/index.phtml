@@ -1,0 +1,178 @@
+<?php
+
+use Stokq\Service\Report\StatsReport;
+
+/** @var StatsReport $stats */
+$stats = $this->statsService;
+
+?>
+
+<div class="container-fluid pt15 pb15 report">
+
+    <div class="mt0 mb20 pl5 pr5">
+        <h2 class="dark-grey m0 narrow-spaced uppercase normal"><i class="fa fa-dashboard fa-2x"></i> Overview</h2>
+        <small class="grey">Menampilkan statistik secara keseluruhan</small>
+    </div>
+
+    <div class="inner window">
+        <div class="row">
+
+            <div class="col-sm-6">
+                <div class="thumbnail">
+
+                    <h2 class="dark-grey mt20 mb20 narrow-spaced uppercase normal pl10">
+                        <i class="fa fa-money fa-2x"></i> Item Terjual
+                    </h2>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <tbody>
+                            <tr>
+                                <th>Item Terjual</th>
+                                <td><?= $stats->getMenuSold() ?></td>
+                            </tr>
+                            <tr>
+                                <th>Penjualan 7 Hari Terakhir</th>
+                                <td><?= $stats->getMenuSoldLast(7) ?></td>
+                            </tr>
+                            <tr>
+                                <th>Penjualan 30 Hari Terakhir</th>
+                                <td><?= $stats->getMenuSoldLast(30) ?></td>
+                            </tr>
+                            <tr>
+                                <th>Avg. Item Terjual</th>
+                                <td><?= number_format($stats->getAvgMenuSoldByOrderDate(), 0) ?></td>
+                            </tr>
+                            <tr>
+                                <th>Max. Item Terjual</th>
+                                <td><?= $stats->getMaxMenuSoldInSale() ?></td>
+                            </tr>
+                            <tr>
+                                <th>Min. Item Terjual</th>
+                                <td><?= $stats->getMinMenuSoldInSale() ?></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="thumbnail">
+
+                    <h2 class="dark-grey mt20 mb20 narrow-spaced uppercase normal pl10">
+                        <i class="fa fa-money fa-2x"></i> Total Income
+                    </h2>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <tbody>
+                            <tr>
+                                <th>Total Penjualan</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($stats->getIncome(), 2) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Penjualan 7 Hari Terakhir</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $stats->getIncomeLast(7) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Penjualan 30 Hari Terakhir</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $stats->getIncomeLast(30) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Avg. Penjualan</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($stats->getAvgIncomeByOrderDate(), 2) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Max. Penjualan</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($stats->getMaxIncomeInSale(), 2) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Min. Penjualan</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($stats->getMinIncomeInSale(), 2) ?>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-sm-6">
+                <div class="thumbnail">
+
+                    <h2 class="dark-grey mt20 mb20 narrow-spaced uppercase normal pl10">
+                        <i class="fa fa-money fa-2x"></i> Total Belanja
+                    </h2>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <tbody>
+                            <tr>
+                                <th>Total Belanja</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($stats->getOutcome(), 2) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Belanja 7 Hari Terakhir</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $stats->getOutcomeLast(7) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Belanja 30 Hari Terakhir</th>
+                                <td class="text-right">
+                                    <strong class="grey left">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $stats->getOutcomeLast(30) ?>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

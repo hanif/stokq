@@ -1,0 +1,232 @@
+<?php
+
+use Stokq\Entity\Account;
+use Stokq\Entity\Outlet;
+use Stokq\Entity\Type;
+
+/** @var Account $account */
+$account = $this->account;
+
+/** @var Outlet $outlet */
+$outlet = $this->outlet;
+
+/** @var Type[] $types */
+$types = $this->types;
+
+$timeRange = '';
+if ($this->fromDT && $this->toDT) {
+    $timeRange = sprintf("Dari tanggal %s sampai tanggal %s.", $this->fromDT->format('d M Y'), $this->toDT->format('d M Y'));
+} else if ($this->fromDT) {
+    $timeRange = sprintf("Dari tanggal %s.", $this->fromDT->format('d M Y'));
+} else if ($this->toDT) {
+    $timeRange = sprintf("Sampai tanggal %s.", $this->toDT->format('d M Y'));
+}
+
+?>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="/js/chart.js"></script>
+<script>
+
+    google.load('visualization', '1.1', {
+        packages: ['corechart', 'bar', 'line'],
+        language: '<?= $account->getDefaultLocale() ?>'
+    });
+
+    GoogleOnLoadCallback(function() {
+
+    });
+
+</script>
+
+<div class="container-fluid pt15 pb15 report">
+
+    <div class="row">
+        <div class="col-xs-12">
+
+            <div class="row well grey card alt-form ml0 mr0 pt5 pl0 pr0 pb10 mb0">
+                <form action="">
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label class="control-label">Outlet</label>
+                            <div class="block">
+                                <select name="id" title="Outlet" data-ui="select2" class="form-control">
+                                    <?php foreach ($outlets as $o) { ?>
+                                        <option value="<?= $o->getId() ?>" <?php if ($o->getId() == $outlet->getId()) { ?> selected <?php } ?>>
+                                            <?= $o->getName() ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Dari Tgl</label>
+                            <input type="text" name="from" value="<?= $this->from ?>" class="form-control" placeholder="Dari Tgl" data-ui="datepicker">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Sampai Tgl</label>
+                            <input type="text" name="to" value="<?= $this->to ?>" class="form-control" placeholder="Sampai Tgl" data-ui="datepicker">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">&nbsp;</label>
+                            <button type="submit" class="btn alt green uppercase form-control"> <i class="fa fa-search"></i> Cari </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="inner window mt20">
+
+        <div class="ml-20 mr-20 mt-20 mb20 bg-grey p20 bb1s">
+            <h2 class="dark-grey m0 narrow-spaced uppercase normal">
+                <i class="fa fa-bar-chart-o"></i> Statistik di Outlet &ldquo;<?= $outlet->getName() ?>&rdquo;
+            </h2>
+            <small class="grey"><?= $timeRange ?></small>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="thumbnail">
+                    <h4 class="grey pl5">Item Terjual</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <tbody>
+                            <tr>
+                                <th>Item Terjual</th>
+                                <td><?= $this->totalMenuSold ?></td>
+                            </tr>
+                            <tr>
+                                <th>Avg. Item Terjual</th>
+                                <td><?= number_format($this->avgMenuSold, 0) ?></td>
+                            </tr>
+                            <tr>
+                                <th>Max. Item Terjual</th>
+                                <td><?= $this->maxMenuSold ?></td>
+                            </tr>
+                            <tr>
+                                <th>Min. Item Terjual</th>
+                                <td><?= $this->minMenuSold ?></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="thumbnail">
+                    <h4 class="grey pl5">Statistik Income</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <tbody>
+                            <tr>
+                                <th>Total Penjualan</th>
+                                <td>
+                                    <strong class="grey">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $this->totalIncome ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Avg. Penjualan</th>
+                                <td>
+                                    <strong class="grey">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= number_format($this->avgIncome, 2) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Max. Penjualan</th>
+                                <td>
+                                    <strong class="grey">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $this->maxIncome ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Min. Penjualan</th>
+                                <td>
+                                    <strong class="grey">
+                                        <?= $this->account->getDefaultCurrency() ?>
+                                    </strong>
+                                    <?= $this->minIncome ?>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <?php foreach ($types as $type) { ?>
+
+            <div class="ml-20 mr-20 mt20 mb20 bg-grey p20 bb1s bt1s">
+                <h2 class="dark-grey m0 narrow-spaced uppercase normal">
+                    <i class="fa fa-bar-chart-o"></i> Kategori: <?= $type->getName() ?>
+                </h2>
+                <small class="grey"><?= $timeRange ?></small>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12 col-md-6">
+                    <div class="pie-chart-container">
+                        <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Qty. Terjual (<?= $outlet->getName() ?>)</h2>
+                        <span class="grey mb10 block"><?= $timeRange ?></span>
+                        <div id="quantity-sold-ratio-type-<?= $type->getId() ?>" class="pie-chart" style="min-height: 380px;"></div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-md-6">
+                    <div class="pie-chart-container">
+                        <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Total Terjual - <?= $account->getDefaultCurrency() ?> (<?= $outlet->getName() ?>)</h2>
+                        <span class="grey mb10 block"><?= $timeRange ?></span>
+                        <div id="total-sold-ratio-type-<?= $type->getId() ?>" class="pie-chart" style="min-height: 380px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="line-chart-container">
+                        <h2 class="m0 mb3 narrow-spaced uppercase normal strong dark-grey">Tren Penjualan (<?= $outlet->getName() ?>)</h2>
+                        <span class="grey mb10 block"><?= $timeRange ?></span>
+                        <div id="quantity-sold-monthly-<?= $type->getId() ?>" class="line-chart" style="min-height: 380px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+
+                GoogleOnLoadCallback(function() {
+
+                    var numberFormatter = NumberFormatter({ format: '#,###', prefix: '<?= $account->getDefaultCurrency() ?> ' }),
+                        ratioByQuantityType<?= $type->getId() ?>DT = ArrayToDataTable(<?= json_encode($this->qtyRatioByTypes[$type->getId()]) ?>),
+                        ratioByTotalType<?= $type->getId() ?>DT = ArrayToDataTable(<?= json_encode($this->totalRatioByTypes[$type->getId()]) ?>),
+                        monthlyQuantitySold<?= $type->getId() ?>DT = ArrayToDataTable(<?= json_encode($this->qtySoldPerMonthByTypes[$type->getId()]) ?>);
+
+                    new PieChart().data(ratioByQuantityType<?= $type->getId() ?>DT).draw('quantity-sold-ratio-type-<?= $type->getId() ?>');
+
+                    numberFormatter.format(ratioByTotalType<?= $type->getId() ?>DT, 1);
+                    new PieChart().data(ratioByTotalType<?= $type->getId() ?>DT).draw('total-sold-ratio-type-<?= $type->getId() ?>');
+
+                    new LineChart().data(monthlyQuantitySold<?= $type->getId() ?>DT).draw('quantity-sold-monthly-<?= $type->getId() ?>');
+                });
+
+            </script>
+
+        <?php } ?>
+
+    </div>
+
+</div>

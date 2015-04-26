@@ -1,0 +1,136 @@
+<?php
+
+use Stokq\Entity\Warehouse;
+
+/** @var Warehouse[] $warehouses */
+$warehouses = $this->warehouses;
+
+?>
+<div class="container-fluid pt15 pb15">
+
+    <div class="row">
+        <div class="col-md-4" id="sidebar-pane">
+            <?= $this->partial('stokq/web/stock-item/_index_sidebar') ?>
+        </div>
+
+        <div class="col-md-8" id="main-pane">
+
+            <div class="inline-block middle ml-15 mb10">
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15 toggle-sidebar" href="#">&larr; Toggle Sidebar</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/warehouse/list-low">Lihat Stok yang Habis</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/warehouse">Lihat Gudang</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/purchase/overview">Statistik Belanja</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/purchase">Tabel Belanja</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered stock-item">
+                    <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 65px !important;"></th>
+                        <th rowspan="2">Nama</th>
+                        <th rowspan="2">Kode</th>
+                        <th rowspan="2">Jenis</th>
+                        <th colspan="2">Unit</th>
+                        <th style="width: 180px;">Level</th>
+                    </tr>
+                    <tr>
+                        <th>S</th>
+                        <th>U</th>
+                        <th>
+                            <select name="warehouse" id="select-warehouse" title="Pilih Gudang" data-ui="select2" class="form-control">
+                                <option value="">-</option>
+                                <?php foreach ($warehouses as $warehouse) { ?>
+                                    <option value="<?= $warehouse->getId() ?>"><?= $warehouse->getName() ?></option>
+                                <?php } ?>
+                            </select>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <tr class="blank-state">
+                        <td colspan="7">
+                            <br/>
+                            <p class="text-center grey">
+                                <i class="fa fa-spinner"></i> Loading data, tunggu sebentar...
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<?php include '_stock_item_row.tpl' ?>
+<?php include '_edit_stock_item_row.tpl' ?>
+<?php include '_no_stock_item.tpl' ?>
+
+<?php include '_category_row.tpl' ?>
+<?php include '_edit_category_row.tpl' ?>
+<?php include '_no_category.tpl' ?>
+
+<?php include '_storage_type_row.tpl' ?>
+<?php include '_edit_storage_type_row.tpl' ?>
+<?php include '_no_storage_type.tpl' ?>
+
+<?php include '_unit_row.tpl' ?>
+<?php include '_edit_unit_row.tpl' ?>
+<?php include '_no_unit.tpl' ?>
+
+<script>
+    var categories = <?= json_encode($this->categories) ?>,
+        storageTypes = <?= json_encode($this->storageTypes) ?>,
+        stockUnits = <?= json_encode($this->flattenUnits) ?>,
+        groupedUnits = <?= json_encode($this->groupedUnits) ?>,
+        stockCache = [];
+
+    <?php include '_index_category.js' ?>
+    <?php include '_index_storage_type.js' ?>
+    <?php include '_index_unit.js' ?>
+    <?php include '_index_stock_item.js' ?>
+
+    $('#select-warehouse').on('change', function() {
+        var target = $(this),
+            updater = function(data) {
+                data.forEach(function(item) {
+                    var txt,
+                        prefix,
+                        currentLevel = parseFloat(item['currentLevel']),
+                        reorderLevel = parseFloat(item['reorderLevel']);
+
+                    if (currentLevel > 0 && currentLevel > reorderLevel) {
+                        prefix = '<span class="smaller green circle"></span>';
+                    } else if (currentLevel > 0 && currentLevel < reorderLevel) {
+                        prefix = '<span class="smaller yellow circle"></span>';
+                    } else if (currentLevel <= 0) {
+                        prefix = '<span class="smaller red circle"></span>';
+                    }
+
+                    txt = prefix + ' ' + Number(item['currentLevel']).toFixed(2) + ' '
+                        + item['stockItem']['storageUnit']['name'];
+                    $('[data-stock-item=' + item['stockItem']['id'] + ']').html(txt);
+                });
+            };
+
+        $('[data-stock-level]').html('');
+        if (target.val()) {
+            if (!stockCache[target.val()]) {
+
+                $('[data-stock-level]').html('<small class="grey">updating...</small>');
+
+                $.getJSON('/stock/list-by-warehouse?id=' + target.val(), function(data) {
+
+                    $('[data-stock-level]').html('');
+
+                    stockCache[target.val()] = data;
+                    updater(data);
+                });
+            } else {
+                updater(stockCache[target.val()]);
+            }
+        }
+    });
+</script>

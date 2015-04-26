@@ -1,0 +1,74 @@
+<div class="container-fluid pt15 pb15">
+
+    <div class="row">
+        <div class="col-md-4" id="sidebar-pane">
+            <?= $this->partial('stokq/web/warehouse/_index_sidebar') ?>
+        </div>
+
+        <div class="col-md-8" id="main-pane">
+
+<!--            <div class="row relative">-->
+<!--                <a href="#" id="toggle-sidebar-pane"><i class="fa fa-2x fa-bars"></i></a>-->
+<!--                <div class="col-sm-10 col-md-5 pull-right text-right">-->
+<!--                    <label class="control-label grey uppercase">-->
+<!--                        Search Warehouse-->
+<!--                    </label>-->
+<!--                    <div class="form-group">-->
+<!--                        <input type="search" name="q" placeholder="Enter Keyword" id="input-filter" class="form-control"/>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+            <div class="inline-block middle ml-15 mb20">
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15 toggle-sidebar" href="#">&larr; Toggle Sidebar</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/warehouse/list-low">Lihat Stok yang Habis</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/reports/purchase/overview">Statistik Belanja</a>
+                <a class="grey underscore smaller-text inline-block p5 pr0 pl15" href="/purchase">Tabel Belanja</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered warehouse">
+                    <thead>
+                    <tr>
+                        <th style="width: 65px !important;"></th>
+                        <th>Nama</th>
+                        <th>Alamat</th>
+                        <th style="width: 80px;">Item</th>
+                        <th style="width: 80px;">Kosong</th>
+                        <th style="width: 80px;">Rendah</th>
+                    </tr>
+                    </thead>
+                    <tbody id="main-list">
+                    <tr class="blank-state">
+                        <td colspan="6">
+                            <br/>
+                            <p class="text-center grey">
+                                <i class="fa fa-spinner"></i> Loading data, tunggu sebentar...
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h5 class="mb10 grey">Indikator</h5>
+                <ul class="no-list-style p0 m0">
+                    <li class="inline-block"><span class="square" style="background: rgba(98, 221, 0, 0.5); border-color: rgba(51, 124, 8, 0.2);"></span> <span style="line-height: 30px; vertical-align: text-bottom;">Normal</span></li>
+                    <li class="inline-block ml20"><span class="square" style="background: rgba(255, 213, 0, 0.5); border-color: rgba(197, 168, 20, 0.15);"></span> <span style="line-height: 30px; vertical-align: text-bottom;">Rendah</span></li>
+                    <li class="inline-block ml20"><span class="square" style="background: rgba(255, 61, 61, 0.5); border-color: rgba(145, 0, 0, 0.15);"></span> <span style="line-height: 30px; vertical-align: text-bottom;">Kosong</span></li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<?php include '_edit_warehouse_row.tpl' ?>
+<?php include '_warehouse_row.tpl' ?>
+<?php include '_no_warehouse.tpl' ?>
+
+<script>
+    <?php include '_index.js' ?>
+</script>
