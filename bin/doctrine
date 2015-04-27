@@ -5,6 +5,7 @@ use Zend\Mvc\Application;
 
 ini_set('display_errors', true);
 
+chdir(__DIR__);
 if (file_exists('../vendor/autoload.php')) {
     include_once '../vendor/autoload.php';
 } else {
