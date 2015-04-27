@@ -12,7 +12,6 @@ fabfile.py
 composer.lock
 composer.phar
 /vendor
-/bin
 *.pyc
 *.tmp
 *.log
