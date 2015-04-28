@@ -655,6 +655,10 @@ ul.logs li {
     background: rgba(0, 0, 0, .015);
 }
 
+.month-group {
+    background: #eee !important;
+}
+
 /* TABLE SUPPLIER */
 
 .table.supplier>thead tr {

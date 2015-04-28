@@ -122,7 +122,34 @@ $pages = $this->pages;
                     </thead>
                     <tbody id="main-list" class="middle">
                     <?php if (count($pages)) { ?>
+
+                        <?php
+
+                        $group = null;
+
+                        ?>
+
                         <?php foreach ($pages as $item) { ?>
+
+                            <?php if ($item->getOrderedAt()->format('F, Y') != $group) { ?>
+
+                                <tr>
+                                    <td colspan="8" class="month-group">
+                                        <strong class="uppercase blue">
+                                            <i class="fa fa-calendar"></i>
+                                            <?= $item->getOrderedAt()->format('F, Y') ?>
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <?php
+
+                                $group = $item->getOrderedAt()->format('F, Y');
+
+                                ?>
+
+                            <?php } ?>
+
                             <tr>
                                 <td>
                                     <strong class="block">
