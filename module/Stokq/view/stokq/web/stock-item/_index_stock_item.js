@@ -101,7 +101,7 @@ app.StockItem.ItemView = Backbone.View.extend({
         if (confirm("Yakin ingin menghapus item yang dipilih?")) {
             var id = this.model.get('id');
             $.ajax({
-                url: $(e.target).attr('href'),
+                url: $(e.currentTarget).attr('href'),
                 data: {id:id},
                 method: 'delete',
                 success: function() {
@@ -200,7 +200,7 @@ ajaxForm($('#add-stock-item-form'), {
         form.trigger('reset');
         storageUnit.attr('disabled', 'disabled').html('');
         usageUnit.attr('disabled', 'disabled').html('');
-        $('.cancel', form).trigger('click');
+        $('input:first', form).focus();
     }
 });
 

@@ -35,7 +35,7 @@ app.StorageType.ItemView = Backbone.View.extend({
         if (confirm("Yakin ingin menghapus item yang dipilih?")) {
             var id = this.model.get('id');
             $.ajax({
-                url: $(e.target).attr('href'),
+                url: $(e.currentTarget).attr('href'),
                 data: {id:id},
                 method: 'delete',
                 success: function() {
@@ -128,6 +128,6 @@ ajaxForm($('#add-storage-type-form'), {
         app.StorageType.data.add(data);
         var form = $(this);
         form.trigger('reset');
-        $('.cancel', form).trigger('click');
+        $('input:first', form).focus();
     }
 });
