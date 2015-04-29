@@ -41,6 +41,11 @@ abstract class Controller extends AbstractActionController implements ServiceLoc
     protected $exceptionHandler;
 
     /**
+     * @var bool
+     */
+    protected $protectRequestMethodByPrefix = false;
+
+    /**
      * @param MvcEvent $event
      * @return mixed
      * @throws \Exception
@@ -70,7 +75,11 @@ abstract class Controller extends AbstractActionController implements ServiceLoc
         }
 
         try {
-            $this->protectRequestMethod($method);
+
+            if ($this->protectRequestMethodByPrefix) {
+                $this->protectRequestMethod($method);
+            }
+
             $actionResponse = $this->{$method}($this->getRequest(), $this->getResponse());
             $event->setResult($actionResponse);
             return $actionResponse;
@@ -433,7 +442,7 @@ abstract class Controller extends AbstractActionController implements ServiceLoc
     public function ensure(...$args)
     {
         $request = $this->getRequest();
-
+        $invalidRequests = 0;
         foreach ($args as $arg) {
             switch (true) {
                 case $arg == 'get':
@@ -441,23 +450,27 @@ abstract class Controller extends AbstractActionController implements ServiceLoc
                 case $arg == 'post':
                 case $arg == 'delete':
                     if (($request instanceof Request) && !strtolower($request->getMethod()) == strtolower($arg)) {
-                        throw new MethodNotAllowedException;
+                        $invalidRequests += 1;
                     }
                     break;
 
                 case $arg == 'xhr':
                 case $arg == 'ajax':
                     if (($request instanceof Request) && !$request->isXmlHttpRequest()) {
-                        throw new MethodNotAllowedException;
+                        $invalidRequests += 1;
                     }
                     break;
 
                 case is_callable($arg):
                     if (!$arg($this)) {
-                        throw new MethodNotAllowedException;
+                        $invalidRequests += 1;
                     }
                     break;
             }
+        }
+
+        if ($invalidRequests >= count($args)) {
+            throw new MethodNotAllowedException;
         }
     }
 

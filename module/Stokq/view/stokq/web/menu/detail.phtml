@@ -370,7 +370,7 @@ $materialPrice = 0;
                 $.ajax({
                     url: target.attr('href'),
                     dataType: 'json',
-                    method: 'DELETE',
+                    method: 'post',
                     success: function() {
                         target.closest('tr').fadeOut('fast');
                     },

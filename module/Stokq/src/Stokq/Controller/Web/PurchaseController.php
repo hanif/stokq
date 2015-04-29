@@ -476,7 +476,7 @@ class PurchaseController extends AuthenticatedController
      */
     public function deleteAction()
     {
-        $this->ensure('delete');
+        $this->ensure('delete', 'post');
         $this->mapper(Purchase::class)->delete($this->getRequestQuery('id'));
         return $this->ok(204);
     }

@@ -142,7 +142,7 @@ class WarehouseController extends AuthenticatedController
      */
     public function deleteAction()
     {
-        $this->ensure('delete');
+        $this->ensure('delete', 'post');
         $this->mapper(Warehouse::class)->delete($this->getRequestPost('id'));
         return $this->ok(204);
     }

@@ -67,7 +67,7 @@ class StockUnitController extends AuthenticatedController
      */
     public function deleteAction()
     {
-        $this->ensure('delete');
+        $this->ensure('delete', 'post');
         $this->mapper(StockUnit::class)->delete($this->getRequestPost('id'));
         return $this->ok(204);
     }

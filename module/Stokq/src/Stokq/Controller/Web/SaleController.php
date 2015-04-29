@@ -335,7 +335,7 @@ class SaleController extends AuthenticatedController
      */
     public function deleteAction()
     {
-        $this->ensure('delete');
+        $this->ensure('delete', 'post');
         $this->mapper(Sale::class)->delete($this->getRequestQuery('id'));
         return $this->ok(204);
     }

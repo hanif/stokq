@@ -312,7 +312,7 @@ $changelog = $this->changelog;
             $.ajax({
                 url: target.attr('href'),
                 dataType: 'json',
-                method: 'DELETE',
+                method: 'post',
                 success: function(resp) {
                     target.closest('tr').fadeOut('fast');
                 },

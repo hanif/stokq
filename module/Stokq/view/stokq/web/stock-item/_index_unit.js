@@ -40,7 +40,7 @@ app.StockUnit.ItemView = Backbone.View.extend({
             $.ajax({
                 url: $(e.currentTarget).attr('href'),
                 data: {id:id},
-                method: 'delete',
+                method: 'post',
                 success: function() {
                     app.StockUnit.data.remove(id);
                 },

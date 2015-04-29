@@ -27,7 +27,7 @@ $pages = $this->pages;
         if (confirm('Are you sure?')) {
             $.ajax({
                 url: self.attr('href'),
-                method: 'delete',
+                method: 'post',
                 success: function() {
                     self.closest('tr').fadeOut();
                 },

@@ -38,7 +38,7 @@ app.Type.ItemView = Backbone.View.extend({
             $.ajax({
                 url: $(e.currentTarget).attr('href'),
                 data: {id:id},
-                method: 'delete',
+                method: 'post',
                 success: function() {
                     app.Type.data.remove(id);
                 },
