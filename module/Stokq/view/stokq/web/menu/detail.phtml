@@ -501,7 +501,9 @@ $materialPrice = 0;
         $.getJSON("/ingredient/ratio-chart-data?menu=<?= $menu->getId() ?>", function(data) {
             var dt = ArrayToDataTable(data);
             numberFormatter.format(dt, 1);
-            new PieChart().data(dt).draw('ingredient-ratio');
+            var chart = new PieChart();
+            chart.options.legend = {position: 'bottom'};
+            chart.data(dt).draw('ingredient-ratio')
         });
 
     });

@@ -98,7 +98,7 @@ $items = $this->items;
 
         computeSubtotal();
 
-        $('[data-total], [data-subtotal], [data-price], [data-quantity]').mask("#,##0", {reverse: true});
+        $('[data-total], [data-subtotal], [data-price]').mask("#,##0", {reverse: true});
     });
 </script>
 
@@ -189,8 +189,8 @@ $items = $this->items;
                                            value="<?= (int)$item->getPrice() ?>" class="alt form-control" placeholder=""/>
                                 </td>
                                 <td>
-                                    <input type="text" name="raw_items[<?= $key ?>][quantity]" data-quantity
-                                           value="0" class="alt form-control" placeholder=""/>
+                                    <input type="number" name="raw_items[<?= $key ?>][quantity]" data-quantity
+                                           value="0" class="alt form-control" placeholder="" step="0.5" min="0"/>
                                 </td>
                                 <td>
                                     <input type="text" name="raw_items[<?= $key ?>][subtotal]" data-subtotal
