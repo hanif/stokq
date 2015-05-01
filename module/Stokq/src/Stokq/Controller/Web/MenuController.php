@@ -134,12 +134,12 @@ class MenuController extends AuthenticatedController
             $types = [];
             $menuTypes = [];
             foreach ($obj->getMenuTypes() as $menuType) {
-                $types[] = $menuType->getMenu()->getId();
+                $types[] = $menuType->getType()->getId();
                 $menuTypes[] = [
                     'id' => $menuType->getId(),
                     'type' => [
-                        'id' => $menuType->getMenu()->getId(),
-                        'name' => $menuType->getMenu()->getName(),
+                        'id' => $menuType->getType()->getId(),
+                        'name' => $menuType->getType()->getName(),
                     ]
                 ];
             }
