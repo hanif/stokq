@@ -92,7 +92,12 @@ class OutletController extends AuthenticatedController
             ));
 
             $qtySoldPerMonthByTypes[$type->getId()] = $this->formatMonthlyQuantitySoldData(
-                $this->getMenuReportService()->getQuantitySoldPerMonth($timelineFromDT, $timelineToDT), clone $timelineFromDT, clone $timelineToDT
+                $this->getMenuReportService()->getQuantitySoldPerMonth($timelineFromDT, $timelineToDT, function(QueryBuilder $builder) use ($type) {
+                    $builder->andWhere('t.id = :type_id');
+                    $builder->setParameter('type_id', $type->getId());
+                }),
+                clone $timelineFromDT,
+                clone $timelineToDT
             );
         }
 
