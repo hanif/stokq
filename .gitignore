@@ -15,4 +15,5 @@ composer.phar
 *.pyc
 *.tmp
 *.log
-/data/proxy
+data/proxy/*.*
+data/cache/*.*
